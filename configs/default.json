@@ -69,10 +69,6 @@
             "#node-monitor": {
                 "active": true,
                 "endpoint": "https://discord.com/api/webhooks/<12345678>/<12345678>"
-            },
-            "private-direct": {
-                "active": true,
-                "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>"
             }
         },
         "slack": {
