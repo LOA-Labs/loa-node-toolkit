@@ -18,6 +18,7 @@ import { Request, Response } from 'express';
 import status from './services/status'
 import rewards from './services/rewards'
 import proposals from './services/proposals'
+import distribution from './services/distribution'
 
 //on demand commands
 import vote from './services/vote'
@@ -30,7 +31,7 @@ const jobs: any = [];
 const CONFIGS: any = {};
 
 (async () => {
-    const SERVICES: any = { status, rewards, proposals, vote }
+    const SERVICES: any = { status, rewards, proposals, distribution, vote }
     const configDir = __dirname + `/../configs/`
     const configFiles = await readdirSync(configDir)
 

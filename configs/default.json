@@ -1,119 +1,118 @@
 {
-    "title": "DEFAULT CONFIG",
-    "active": true,
-    "TEST_CRON_ONLY": false,
-    "FORCE_SCHEDULE_CRON": true,
-    "services": {
-        "status": {
-            "active": true,
-            "run_on_start": true,
-            "title": "Status Service",
-            "cron": "*/10 * * * *",
-            "count_force_notify": 36,
-            "notify": {
-                "discord": "#node-monitor",
-                "slack": "#node-monitor"
-            }
-        },
-        "rewards": {
-            "active": true,
-            "run_on_start": false,
-            "title": "Daily Rewards Report",
-            "cron": "0 12 * * *",
-            "use_mnemonic": "asset_manager",
-            "notify": {
-                "slack": "#node-monitor",
-                "discord": "#node-monitor"
-            }
-        },
-        "proposals": {
-            "active": true,
-            "run_on_start": true,
-            "title": "Proposal Check",
-            "cron": "15 * * * *",
-            "count_force_notify": 12,
-            "count_active_notify": 6,
-            "notify": {
-                "slack": "#gov-monitor",
-                "discord": "#gov-monitor"
-            }
-        }
+  "title": "DEFAULT CONFIG",
+  "active": true,
+  "TEST_CRON_ONLY": false,
+  "FORCE_SCHEDULE_CRON": true,
+  "services": {
+    "status": {
+      "active": true,
+      "run_on_start": true,
+      "title": "Status Service",
+      "cron": "*/10 * * * *",
+      "count_force_notify": 36,
+      "notify": {
+        "discord": "#node-monitor",
+        "slack": "#node-monitor"
+      }
     },
-    "commands": {
-        "vote": {
-            "active": true,
-            "title": "Voting",
-            "use_mnemonic": "voter",
-            "credentials": {
-                "channel_id": [
-                    "12345678",
-                    "12345678"
-                ]
-            },
-            "notify": {
-                "slack": "#node-monitor",
-                "discord": "#node-monitor"
-            }
-        }
+    "rewards": {
+      "active": true,
+      "run_on_start": false,
+      "title": "Daily Rewards Report",
+      "cron": "0 12 * * *",
+      "use_mnemonic": "asset_manager",
+      "notify": {
+        "slack": "#node-monitor",
+        "discord": "#node-monitor"
+      }
     },
-    "grantee_mnemonics": {
-        "asset_manager": "<mnemonic of grantee with narrow authz priviledges to execute necessary claim rewards and restake>",
-        "voter": "<mnemonic of grantee with narrow authz priviledges to execute vote>"
+    "proposals": {
+      "active": true,
+      "run_on_start": true,
+      "title": "Proposal Check",
+      "cron": "15 * * * *",
+      "count_force_notify": 12,
+      "count_active_notify": 6,
+      "notify": {
+        "slack": "#gov-monitor",
+        "discord": "#gov-monitor"
+      }
+    }
+  },
+  "commands": {
+    "vote": {
+      "active": true,
+      "title": "Voting",
+      "use_mnemonic": "voter",
+      "credentials": {
+        "channel_id": [
+          "12345678",
+          "12345678"
+        ]
+      },
+      "notify": {
+        "slack": "#node-monitor",
+        "discord": "#node-monitor"
+      }
+    }
+  },
+  "grantee_mnemonics": {
+    "asset_manager": "<mnemonic of grantee with narrow authz priviledges to execute necessary claim rewards and restake>",
+    "voter": "<mnemonic of grantee with narrow authz priviledges to execute vote>"
+  },
+  "notifications": {
+    "discord": {
+      "#gov-monitor": {
+        "active": true,
+        "endpoint": "https://discord.com/api/webhooks/<12345678>/<12345678>"
+      },
+      "#node-monitor": {
+        "active": true,
+        "endpoint": "https://discord.com/api/webhooks/<12345678>/<12345678>"
+      }
     },
-    "notifications": {
-        "discord": {
-            "#gov-monitor": {
-                "active": true,
-                "endpoint": "https://discord.com/api/webhooks/<12345678>/<12345678>"
-            },
-            "#node-monitor": {
-                "active": true,
-                "endpoint": "https://discord.com/api/webhooks/<12345678>/<12345678>"
-            }
-        },
-        "slack": {
-            "#gov-monitor": {
-                "active": true,
-                "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
-            },
-            "#node-monitor": {
-                "active": true,
-                "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
-            },
-            "private-direct": {
-                "active": true,
-                "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
-            }
-        }
+    "slack": {
+      "#gov-monitor": {
+        "active": true,
+        "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
+      },
+      "#node-monitor": {
+        "active": true,
+        "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
+      },
+      "private-direct": {
+        "active": true,
+        "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
+      }
+    }
+  },
+  "explorer": "https://www.mintscan.io",
+  "networks": [
+    {
+      "name": "regen",
+      "chain_id": "regen-1",
+      "coingecko_id": "regen",
+      "denom": "uregen",
+      "gas_prices": "0.025",
+      "gas_auto": true,
+      "rpc": "http://127.0.0.1:26657",
+      "disk_check_endpoint": "http://127.0.0.1:4445/disk?disk=/mnt/volume_01",
+      "granter": "regen1...",
+      "valoper": "regenvaloper1...",
+      "restake": 0.5
     },
-    "price_api": "https://api-utility.cosmostation.io/v1/market/prices",
-    "networks": [{
-            "name": "regen",
-            "chain_id": "regen-1",
-            "denom": "uregen",
-            "gas_prices": "0.015",
-            "lcd_monitoring": "http://<node-address>:<port>",
-            "lcd_disk": "http://<node-address>:<port>/disk?disk=/mnt/<volume-name>",
-            "lcd_leading": "http://<node-address>:<port>",
-            "rpc": "http://public-rpc.regen.vitwit.com:26657",
-            "explorer": "https://www.mintscan.io",
-            "addr_grantor": "regen1...",
-            "addr_validator": "regenvaloper1...",
-            "restake": 0.5
-        },
-        {
-            "name": "gravity-bridge",
-            "chain_id": "gravity-bridge-3",
-            "gas_prices": "0.015",
-            "denom": "ugraviton",
-            "lcd_monitoring": "http://<node-address>:<port>",
-            "lcd_disk": "http://<node-address>:<port>/disk?disk=/mnt/<volume-name>",
-            "lcd_leading": "http://<node-address>:<port>",
-            "rpc": "https://gravitychain.io:26657",
-            "explorer": "https://www.mintscan.io",
-            "addr_grantor": "gravity1...",
-            "addr_validator": "gravityvaloper1...",
-            "restake": 0.5
-        }
-    ]
+    {
+      "name": "gravity-bridge",
+      "chain_id": "gravity-bridge-3",
+      "coingecko_id": "graviton",
+      "denom": "ugraviton",
+      "gas_prices": "0.025",
+      "gas_auto": true,
+      "rpc": "http://127.0.0.1:26657",
+      "disk_check_endpoint": "http://127.0.0.1:4445/disk?disk=/mnt/volume_01",
+      "granter": "gravity1...",
+      "valoper": "gravityvaloper1...",
+      "restake": 0.5
+    }
+  ]
 }

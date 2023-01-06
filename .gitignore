@@ -1,3 +1,5 @@
+.DS_Store
+
 # lnm needs these specifically ignored
 configs
 dist

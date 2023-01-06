@@ -61,7 +61,7 @@ export default async ({ network, status }: any) => {
 				const prop = res.proposals[index];
 				let resVote = null
 				try {
-					const request: QueryVoteRequest = { proposalId: prop.proposalId, voter: network.addr_grantor }
+					const request: QueryVoteRequest = { proposalId: prop.proposalId, voter: network.granter }
 					resVote = await QueryService.Vote(request);
 				} catch (e) {
 					console.log(`PROP ${network.name}  ${prop.proposalId} NO VOTE FOUND`)
