@@ -1,7 +1,7 @@
 Highly configurable and lightweight Nodejs toolkit for monitoring, governing, and financing validator nodes on Cosmos.
-​
+
 [Installation](#installation)
-​
+
 * Nodejs toolset to monitor validator uptime and diskspace, automate rewards and restaking, monitor and vote on governance proposals. 
 ​
 * Takes a lightweight approach to node monitoring and automation. Nodejs instance(s) can run on its own node, or on validator node.
@@ -49,6 +49,7 @@ vim configs/default.json
 ### Status Service
 
 The most basic service is Status, so let's begin with there. Under "networks" section, update "name", "chain_id", and "rpc" with your chain/node's information. This are the only three settings required for Status service:
+
 ```
     {
       "name": "regen",
@@ -72,6 +73,7 @@ After restarting your node, http://<IP address>:26657 should now show the defaul
 If you do not wish your RPC server to be public, you can use UFW firewall to allow access to only your known IP addresses. 
 
 ### Status service configs:
+
 ```
     "status": {
       "enabled": true,
@@ -90,8 +92,10 @@ If you do not wish your RPC server to be public, you can use UFW firewall to all
 ```
 
 ### Notification configs:
-Setting up [Discord webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
-Setting up [Slack webhook](https://api.slack.com/messaging/webhooks)
+
+* Setting up [Discord webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
+
+* Setting up [Slack webhook](https://api.slack.com/messaging/webhooks)
 ```
 "notifications": {
     "discord": {
@@ -112,6 +116,6 @@ Once networks, services, and notifications are configured, run:
 
 ```
 npm run build
-​
+
 npm run start
 ```
