@@ -2,11 +2,17 @@ import { createProtobufRpcClient, QueryClient } from "@cosmjs/stargate";
 import { QueryClientImpl as QueryClientImplBankQuery } from "cosmjs-types/cosmos/bank/v1beta1/query";
 import { QueryClientImpl as QueryClientImplStakingDelegation } from "cosmjs-types/cosmos/staking/v1beta1/query";
 import { Tendermint34Client } from "@cosmjs/tendermint-rpc";
+import { NetworkConfig } from "./global.types";
 
-export default async (network: any) => {
-  // console.log("function balances", network.chain_id);
-  if (!network.rpc) return;
+export type queryBalanceResult = {
+  amount: number
+  error?:Error
+}
+
+
+export const queryBalance = async (network: NetworkConfig):Promise<queryBalanceResult> => {
   try {
+    if (!network.rpc) throw new Error(`Network ${network.name}: RPC is undefined`);
     const tendermint = await Tendermint34Client.connect(network.rpc);
     const queryClient = new QueryClient(tendermint);
     const rpcClient = createProtobufRpcClient(queryClient);
@@ -15,34 +21,31 @@ export default async (network: any) => {
       address: network.granter,
       denom: network.denom,
     });
-    let resultObject = { chain_id: network.chain_id, ...res.balance };
+    let resultObject = {amount:Number(res.balance.amount)};
     return resultObject;
   } catch (error) {
     console.log(error);
-    return { chain_id: network.chain_id, error };
+    return { amount:0, error };
   }
 };
 
-export const queryStaked = async (network: any) => {
-  // console.log("function queryStaked", network.chain_id);
-  if (!network.rpc) return;
+export const queryStaked = async (network: NetworkConfig):Promise<queryBalanceResult> => {
   try {
+    if (!network.rpc) throw new Error(`Network ${network.name}: RPC is undefined`);
     const tendermint = await Tendermint34Client.connect(network.rpc);
     const queryClient = new QueryClient(tendermint);
     const rpcClient = createProtobufRpcClient(queryClient);
     const stakingQueryService = new QueryClientImplStakingDelegation(rpcClient);
     let res = await stakingQueryService.Delegation({
       delegatorAddr: network.granter,
-      validatorAddr: network.addr_validator,
+      validatorAddr: network.valoper,
     });
-    // console.log(res)
     let resultObject = {
-      chain_id: network.chain_id,
-      ...res.delegationResponse.balance,
+      amount:Number(res.delegationResponse.balance.amount),
     };
     return resultObject;
   } catch (error) {
     console.log(error);
-    return { chain_id: network.chain_id, error };
+    return { amount:0, error };
   }
 };

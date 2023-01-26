@@ -1,12 +1,13 @@
 import axios from "axios";
-import notify from "./helpers/notify";
-import Report from "./helpers/class.report";
-import { Interval } from "./helpers/interval.factory";
-import { serviceFiltered } from "./helpers/utils";
+import { notify } from "../helpers/notify";
+import Report from "../helpers/class.report";
+import { Interval } from "../helpers/interval.factory";
+import { serviceFiltered } from "../helpers/utils";
+import { LntConfig, NetworkConfig, Service } from "../helpers/global.types";
 
 const localStatusTesting = true;
 
-export default async (service: any, config: any) => {
+export default async (service: Service, config: LntConfig): Promise<boolean> => {
 
   ////////////////////////////////////////////////////
   //start interval service
@@ -21,14 +22,14 @@ export default async (service: any, config: any) => {
   //set report defaults
   let notifyFlag = false;
   let messageType = "Checkin";
-  let latest_block_time_maxdif_seconds = 30;
+  let latest_block_time_maxdif_seconds = 60;
   let disk_alert_threshold = 96;
   let resultsArray = [];
 
   for (let index = 0; index < config.networks.length; index++) {
 
-    const network = config.networks[index];
-    if (serviceFiltered("status", network) || network?.active === false) continue;
+    const network: NetworkConfig = config.networks[index];
+    if (serviceFiltered("status", network) || network?.enabled === false) continue;
 
     ////////////////////////////////////////////////////
     //reset defaults for individual networks
@@ -48,20 +49,20 @@ export default async (service: any, config: any) => {
         latest_block_height = rpc_status.result.sync_info.latest_block_height;
         catching_up = rpc_status.result.sync_info.catching_up;
         latest_block_time = rpc_status.result.sync_info.latest_block_time;
-        unix_time_now = new Date().getTime()/1000;
-        unix_time_block = new Date(latest_block_time).getTime()/1000;
+        unix_time_now = new Date().getTime() / 1000;
+        unix_time_block = new Date(latest_block_time).getTime() / 1000;
         // console.log(unix_time_now,unix_time_block)
       } catch (e) {
-        console.log("ERROR",e.message);
+        console.log(e)
         if (e.config?.url && e.message) e.message += `: ${e.config?.url}`;
         resultsArray.push({
           id: network.chain_id,
           text: e.message || JSON.stringify(e),
         });
-      }
         notifyFlag = true;
-        messageType = "ERROR";
+        messageType = "RPC ERROR";
         icon = "🚨";
+      }
     }
 
     ////////////////////////////////////////////////////
@@ -80,7 +81,7 @@ export default async (service: any, config: any) => {
     ////////////////////////////////////////////////////
     //check disk usage
     let diskReport = "N/A";
-    if (network.disk_check_endpoint && process.env.NODE_ENV == "production"  || localStatusTesting) {
+    if (network.disk_check_endpoint && process.env.NODE_ENV == "production" || localStatusTesting) {
       try {
         const diskData: any = await axios.get(`${network.disk_check_endpoint}`, {
           timeout: 5000,
@@ -94,17 +95,18 @@ export default async (service: any, config: any) => {
           messageType = "DISK ALERT!";
           icon = "🚨";
         }
-        diskReport = `${diskData.data.percent}%`;
+        diskReport = `${diskData.data.percent}%`.padStart(3);
       } catch (e) {
         console.log(e);
       }
     }
 
+    //push to results array for reporting
     resultsArray.push({
       id: network.chain_id,
       text: `${icon} ${network.chain_id.padEnd(
         18
-      )} ${diskReport} \tHeight: ${latest_block_height}\tET:` + `${latest_block_time_dif_seconds.toFixed(1)}s`.padStart(5),
+      )} ${diskReport} \tHeight: ${latest_block_height.toString().padEnd(9)}\tET: ${latest_block_time_dif_seconds.toFixed(1)}s`.padStart(6),
     });
   }
 
@@ -117,9 +119,10 @@ export default async (service: any, config: any) => {
   report.addRow(`\n*Monitoring ${messageType}*`).backticks();
   resultsArray.map((o) => report.addRow(o.text));
   let text = report.backticks().print();
-  console.log(text);
 
   if (notifyFlag) {
     await notify({ text, config, service });
-  }
+  } else console.log(text);
+
+  return true
 };

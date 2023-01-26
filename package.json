@@ -1,42 +1,43 @@
 {
-    "name": "loa-node-toolkit",
-    "version": "0.1.1",
-    "main": "src/index.ts",
-    "license": "MIT",
-    "scripts": {
-        "clean": "rimraf dist/",
-        "copy-files": "copyfiles -u 1 src/configs/*.json dist/",
-        "start": "NODE_ENV=production node ./dist/index.js",
-        "start-ts-old": "NODE_ENV=production node -r ts-node/register ./src/index.ts",
-        "build": "npm run clean && tsc --allowSyntheticDefaultImports src/*.ts --outDir ./dist && npm run copy-files",
-        "devprod": "nodemon --config nodemon.prod.json src/index.ts",
-        "dev": "NODE_ENV=development nodemon --config nodemon.json src/index.ts",
-        "start-ts": "nodemon --config nodemon-prod.json src/index.ts",
-        "dev:debug": "nodemon --config nodemon.json --inspect-brk src/index.ts"
-    },
-    "devDependencies": {
-        "@types/node": "^14.11.2",
-        "nodemon": "^2.0.4",
-        "ts-node": "^9.0.0",
-        "typescript": "^4.0.3"
-    },
-    "dependencies": {
-        "@cosmjs/proto-signing": "^0.29.5",
-        "@cosmjs/stargate": "^0.29.5",
-        "@cosmjs/tendermint-rpc": "^0.29.5",
-        "@slack/webhook": "^6.1.0",
-        "axios": "^0.27.2",
-        "check-disk-space": "^3.3.1",
-        "copyfiles": "^2.4.1",
-        "cosmjs-types": "^0.5.1",
-        "croner": "^4.3.16",
-        "discord-interactions": "^3.2.0",
-        "dotenv": "^16.0.3",
-        "express": "^4.18.2",
-        "human-date": "^1.4.0",
-        "node-fetch": "^3.2.10",
-        "rimraf": "^3.0.2",
-        "twitter-api-v2": "^1.12.8",
-        "uuid": "^8.3.2"
-    }
+  "name": "loa-node-toolkit",
+  "version": "0.2.4",
+  "main": "src/index.ts",
+  "license": "MIT",
+  "scripts": {
+    "clean": "rimraf dist/",
+    "copy-files": "copyfiles -u 1 src/configs/*.json dist/",
+    "start": "NODE_ENV=production node ./dist/index.js",
+    "start-ts-old": "NODE_ENV=production node -r ts-node/register ./src/index.ts",
+    "build": "npm run clean && tsc --allowSyntheticDefaultImports src/*.ts --outDir ./dist && npm run copy-files",
+    "devprod": "nodemon --config nodemon.prod.json src/index.ts",
+    "dev": "NODE_ENV=development nodemon --config nodemon.json src/index.ts",
+    "start-ts": "nodemon --config nodemon-prod.json src/index.ts",
+    "dev:debug": "nodemon --config nodemon.json --inspect-brk src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^14.11.2",
+    "nodemon": "^2.0.4",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.0.3"
+  },
+  "dependencies": {
+    "@cosmjs/proto-signing": "^0.29.5",
+    "@cosmjs/stargate": "^0.29.5",
+    "@cosmjs/tendermint-rpc": "^0.29.5",
+    "@slack/webhook": "^6.1.0",
+    "axios": "^0.27.2",
+    "check-disk-space": "^3.3.1",
+    "copyfiles": "^2.4.1",
+    "cosmjs-types": "^0.5.1",
+    "croner": "^4.3.16",
+    "discord-interactions": "^3.2.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "human-date": "^1.4.0",
+    "node-fetch": "^3.2.10",
+    "rimraf": "^3.0.2",
+    "tsconfig-paths": "^4.1.2",
+    "twitter-api-v2": "^1.12.8",
+    "uuid": "^8.3.2"
+  }
 }

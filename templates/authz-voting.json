@@ -1,0 +1,47 @@
+{
+  "body": {
+    "messages": [
+      {
+        "@type": "/cosmos.authz.v1beta1.MsgGrant",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
+        "grant": {
+          "authorization": {
+            "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
+            "msg": "/cosmos.gov.v1beta1.MsgVote"
+          }
+        }
+      },
+      {
+        "@type": "/cosmos.authz.v1beta1.MsgGrant",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
+        "grant": {
+          "authorization": {
+            "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
+            "msg": "/cosmos.gov.v1beta1.MsgSubmitProposal"
+          }
+        }
+      }
+    ],
+    "memo": "",
+    "timeout_height": "0",
+    "extension_options": [],
+    "non_critical_extension_options": []
+  },
+  "auth_info": {
+    "signer_infos": [],
+    "fee": {
+      "amount": [
+        {
+          "denom": "uatom",
+          "amount": "5000"
+        }
+      ],
+      "gas_limit": "200000",
+      "payer": "",
+      "granter": ""
+    }
+  },
+  "signatures": []
+}

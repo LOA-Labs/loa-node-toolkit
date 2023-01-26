@@ -1,22 +1,20 @@
 {
   "title": "DEFAULT CONFIG",
-  "active": true,
-  "TEST_CRON_ONLY": false,
-  "FORCE_SCHEDULE_CRON": true,
+  "enabled": true,
   "services": {
     "status": {
-      "active": true,
+      "enabled": true,
       "run_on_start": true,
       "title": "Status Service",
-      "cron": "*/10 * * * *",
-      "count_force_notify": 36,
+      "cron": "*/5 * * * *",
+      "count_force_notify": 72,
       "notify": {
         "discord": "#node-monitor",
         "slack": "#node-monitor"
       }
     },
     "rewards": {
-      "active": true,
+      "enabled": true,
       "run_on_start": false,
       "title": "Daily Rewards Report",
       "cron": "0 12 * * *",
@@ -27,12 +25,12 @@
       }
     },
     "proposals": {
-      "active": true,
-      "run_on_start": true,
+      "enabled": true,
+      "run_on_start": false,
       "title": "Proposal Check",
       "cron": "15 * * * *",
       "count_force_notify": 12,
-      "count_active_notify": 6,
+      "count_enabled_notify": 6,
       "notify": {
         "slack": "#gov-monitor",
         "discord": "#gov-monitor"
@@ -41,7 +39,7 @@
   },
   "commands": {
     "vote": {
-      "active": true,
+      "enabled": true,
       "title": "Voting",
       "use_mnemonic": "voter",
       "credentials": {
@@ -63,25 +61,25 @@
   "notifications": {
     "discord": {
       "#gov-monitor": {
-        "active": true,
+        "enabled": true,
         "endpoint": "https://discord.com/api/webhooks/<12345678>/<12345678>"
       },
       "#node-monitor": {
-        "active": true,
+        "enabled": true,
         "endpoint": "https://discord.com/api/webhooks/<12345678>/<12345678>"
       }
     },
     "slack": {
       "#gov-monitor": {
-        "active": true,
+        "enabled": true,
         "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
       },
       "#node-monitor": {
-        "active": true,
+        "enabled": true,
         "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
       },
       "private-direct": {
-        "active": true,
+        "enabled": true,
         "endpoint": "https://hooks.slack.com/services/<12345678>/<12345678>/<12345678>"
       }
     }
@@ -114,5 +112,9 @@
       "valoper": "gravityvaloper1...",
       "restake": 0.5
     }
-  ]
+  ],
+  "debug": {
+    "TEST_CRON_ONLY": false,
+    "SCHEDULE_CRON": true
+  }
 }
