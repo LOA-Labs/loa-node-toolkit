@@ -13,16 +13,15 @@ Highly configurable and lightweight Nodejs toolkit for monitoring, governing, an
 * Each service runs on its own cron schedule, frequency of checkins and notifications can be customized.
 ​
 ## Monitoring Checks fed into Slack Channel
-![Monitoring Checks](https://pitch-assets.imgix.net/077a8f6e-0166-4a5d-92d3-c6b6e899c655)
+<img width="661" alt="Oszz9ZRWMFU_ZvHJ7vKtrj2H6Ml4bLE4rACcLa4CGIERMJ9ib1wKOE_bVqdsat8PhEc63KkE2PlaxpM3l9R7HP52YL340IglOUHZrCdMAfNmUcrfVplJmHRBUXLX" src="https://user-images.githubusercontent.com/9093152/214908503-4a43fb96-df63-4d5e-ae94-972252bf7423.png">
+
 ​
 ## Automatic Rewards Withdrawals and Restaking Daily Compounding Report
-![Auto Rewards and Auto Restaking](https://pitch-assets.imgix.net/c1ae489d-8981-4f56-adce-e517f0b266fb)
-​
-## Gov Proposal Checks fed into private Slack Channel, also Monitoring alert shown with comment thread
-![Proposal Checks](https://pitch-assets.imgix.net/e84e60af-ec08-4f71-bc0a-0251332bdeb2)
-​
-## Governance Votes Execution with Slack (or Discord) Command from private channel, also gov disccussion in comment thread
-![Executing Governance Votes](https://pitch-assets.imgix.net/0bc1edd2-77ac-46cb-b014-2adf1db5339f)
+![Auto Rewards and Auto Restaking](https://user-images.githubusercontent.com/9093152/214908668-5fd3bd06-9bd2-4736-bffb-f4f36f954b57.png)
+
+## Gov Proposal Checks fed into private Slack Channel, also Monitoring alert shown with comment thread & Governance Votes Execution with Slack (or Discord) Command from private channel, also gov disccussion in comment thread
+![Proposal Checks & Executing Governance Votes](https://user-images.githubusercontent.com/9093152/214908831-1e3acc9a-43fe-4d2d-9c98-8b6c4c06c2a5.png)
+
 ​
 ## Installation
 ​
