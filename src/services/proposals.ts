@@ -5,7 +5,6 @@ import {
   humanReadibleVoteOption,
   OnChainProposalResult,
 } from "../helpers/queryOnChainProposals";
-import { instantiator } from "./database/instantiator";
 import { notify } from "../helpers/notify";
 import Report from "../helpers/class.report";
 import { Interval } from "../helpers/interval.factory";
@@ -15,9 +14,8 @@ import { LntConfig, NetworkConfig, Service } from "../helpers/global.types";
 const localTesting = true
 
 ////////////////////////////////////////////////////
-//keep track of which proposals have received notification
-const proposalNotifications = [];
-const dbInstance = instantiator.init("hasura");
+//keep in memory new proposals that have already triggered notification
+const newProposalNotifications = [];
 
 export default async (service: Service, config: LntConfig): Promise<boolean> => {
 
@@ -26,7 +24,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
     //start two interval services, one regular, one more frequent
     const uuid_regular: string = service.uuid;
     const uuid_active: string = service.uuid + "-active";
-    Interval.init(uuid_regular, service.count_force_notify);
+    Interval.init(uuid_regular, service.force_notify_count);
     Interval.init(uuid_active, service.count_active_notify);
     Interval.inc(uuid_regular);
     Interval.inc(uuid_active);
@@ -48,24 +46,9 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
     let forceNotify = false;
 
     if (process.env.NODE_ENV == "production" || localTesting) {
-      ////////////////////////////////////////////////////
-      //get proposals open for voting from database
-      const openProposalsInDatabase = [];
-      try {
-        let res = await dbInstance.exec("getActiveProposals", {
-          timestamp: new Date().toISOString(),
-        });
-        openProposalsInDatabase.push(...res?.data?.proposals);
-        console.log(
-          "\n========= openProposalsInDatabase ",
-          JSON.stringify(openProposalsInDatabase)
-        );
-      } catch (e) {
-        console.log(e);
-      }
 
       ////////////////////////////////////////////////////
-      //get proposals open for voting on chain for each network
+      //get on-chain proposals open for voting for each network
       const openProposalsOnChain = [];
       for (let index = 0; index < config.networks.length; index++) {
         const network: NetworkConfig = config.networks[index];
@@ -87,6 +70,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         "\n========= openProposalsOnChain.length ",
         openProposalsOnChain.length
       );
+
       if (openProposalsOnChain.length > 0) {
         let curChainId = "";
         let curNetworkConfig: any = {};
@@ -95,21 +79,6 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         //check each on-chain proposal 
         for (let index = 0; index < openProposalsOnChain.length; index++) {
           const chainProposal = openProposalsOnChain[index];
-
-          //find proposal in db results
-          const dbProposal = openProposalsInDatabase.find(
-            (item: any) =>
-              item.proposal_id == chainProposal.proposal_id &&
-              item.chain_id == chainProposal.chain_id
-          );
-          //if not found save proposal to db
-          if (!dbProposal) {
-            console.log("INSERTING PROP chainProposal:", chainProposal);
-            let res = await dbInstance.exec("insertProposal", {
-              variables: chainProposal,
-            });
-            console.log(res);
-          }
 
           ////////////////////////////////////////////////////
           //add network heading for reporting
@@ -123,18 +92,17 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
             );
           }
 
-
           let uniqueProposalId = `${curNetworkConfig.name}_${chainProposal.id}`;
           let voteIcon = "✅";
           ////////////////////////////////////////////////////
           //if has not been voted on yet, force notify
           if (parseInt(chainProposal.option) === 0) {
-            if (proposalNotifications.indexOf(uniqueProposalId) === -1) {
+            if (newProposalNotifications.indexOf(uniqueProposalId) === -1) {
               forceNotify = true; //force notify if we've never seen this proposal
             }
             notifyFlag = true;
             voteIcon = "🚨";
-            proposalNotifications.push(uniqueProposalId);
+            newProposalNotifications.push(uniqueProposalId);
           }
 
           ////////////////////////////////////////////////////
@@ -169,19 +137,18 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
       confirmNotify = true;
       Interval.reset(uuid_regular);
       Interval.reset(uuid_active);
-      proposalNotifications.length = 0; //flush at regular notification interval
+      newProposalNotifications.length = 0; //flush from memory at regular notification interval
     }
 
     ////////////////////////////////////////////////////
-    //reduce rate of notifications when enabled proposal already seen
+    //reduce rate of notifications after open proposal has already triggered notification
     if (Interval.complete(uuid_active, false) && notifyFlag === true) {
       confirmNotify = true;
       Interval.reset(uuid_active);
     }
 
-
     ////////////////////////////////////////////////////
-    //confirmNotify triggered at regular intervals, force notify triggered on new proposals found (not seen)
+    //confirmNotify triggered at regular intervals, force notify triggered on new proposals
     if (confirmNotify || forceNotify) {
       await notify({ text: report.print(), config, service });
     }

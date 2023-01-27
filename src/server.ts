@@ -24,7 +24,7 @@ export default (CONFIGS: LntConfig[]) => {
 
   app.listen(port, () => {
 
-    report.header(`Listening for commands on port ${port}`)
+    report.header(`SERVER Listening for commands on port ${port}`)
     Object.entries(CONFIGS).map(([key, object]: any) => {
       report.addRow(`\n\t ${key} ${object.enabled ? 'ENABLED' : 'NOT ENABLED'}`)
       if (object.enabled) {

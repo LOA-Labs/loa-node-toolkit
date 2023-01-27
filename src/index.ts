@@ -43,12 +43,25 @@ const CONFIGS: LntConfig[] = [];
 
     const filePath: string = configDir + configFiles[i]
 
+    let config: LntConfig
+
     try {
-      const config: LntConfig = JSON.parse(await readFileSync(filePath, 'utf-8'))
+      config = JSON.parse(await readFileSync(filePath, 'utf-8'))
+    } catch (e) {
+      console.log(`ERROR: Could not read config: ${filePath}`)
+      continue
+    }
+
+    try {
 
       CONFIGS[configFiles[i].split(".").shift()] = config //index and store in memory
 
-      if (config.enabled === false) continue
+      if (config.enabled === false) {
+        report.addRow(`Config Not Enabled: ${filePath}`)
+        continue
+      }
+
+      report.addRow(`Config Enabled: ${filePath}`)
 
       const serviceKeys: string[] = Object.keys(config.services)
 
@@ -58,8 +71,15 @@ const CONFIGS: LntConfig[] = [];
 
         const serviceKey = serviceKeys[j]
         const service: Service = config.services[serviceKey];
+
+        if (service.enabled === false) {
+          report.addRow(` Service Not Enabled: ${serviceKey}`)
+          continue
+        }
+
+        report.addRow(` Service Enabled: ${serviceKey}`)
+
         service.uuid = v4() //assign each service unique id
-        if (service.enabled === false) continue
 
         try {
           if (process.env.NODE_ENV === "production" || config.debug.SCHEDULE_CRON) {
@@ -93,9 +113,11 @@ const CONFIGS: LntConfig[] = [];
         report.section()
       }
     } catch (e) {
-      console.log(`ERROR: Could not read config: ${filePath}`, e)
+      console.log(`Caught error:`, e)
     }
   }
+
+  console.log(report.print())
 
   //start server to recieve commands
   runServer(CONFIGS)

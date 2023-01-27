@@ -6,7 +6,7 @@ export default class Report {
   private break: string = ` ----------------------------`
 
   public header(data: string): Report {
-    this.rows.push(this.div)
+    this.rows.push('')
     this.rows.push(this.div)
     this.rows.push(`# ${data}`)
     return this

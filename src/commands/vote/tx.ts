@@ -9,44 +9,51 @@ import { LntConfig } from "../../helpers/global.types"
 import Request from "express"
 import { instantiator } from "../../services/database/instantiator"
 
-const dbInstance = instantiator.init("hasura")
-const testVoteTx = true
+//optional storing of votes in db
+const dbInstance = instantiator.init("hasura") || null
+
+const testVoteTx = false
 
 export default async ({ req, config }: { req: Request, config: LntConfig }): Promise<boolean> => {
 
   console.log("\n=========\nVOTE QUERY:", req.query)
   console.log("VOTE QUERY BODY TEXT:", req.body.text)
-
   const command = config?.commands?.vote
   const report = new Report()
 
-  let authed = false
-  if (command.enabled !== true) {
-    report.addRow("Service not enabled.")
-  } else if (typeof command.credentials === "object" && command.credentials !== null) {
-    ////////////////////////////////////////////////////
-    //authenticate source of command 
-    let credKeys = Object.keys(command.credentials)
-    for (let index = 0; index < credKeys.length; index++) {
-      let cred_value = command.credentials[credKeys[index]];
-      cred_value = Array.isArray(cred_value) ? cred_value : [cred_value]
-      if (cred_value && cred_value.indexOf(req.body[credKeys[index]]) !== -1) {
-        authed = true
+  //crude auth
+  try {
+
+    let authed = false
+    if (command.enabled !== true) {
+      report.addRow("Service not enabled.")
+    } else if (typeof command.credentials === "object" && command.credentials !== null) {
+      ////////////////////////////////////////////////////
+      //authenticate source of command 
+      let credKeys = Object.keys(command.credentials)
+      for (let index = 0; index < credKeys.length; index++) {
+        let cred_value = command.credentials[credKeys[index]];
+        cred_value = Array.isArray(cred_value) ? cred_value : [cred_value]
+        if (cred_value && cred_value.indexOf(req.body[credKeys[index]]) !== -1) {
+          authed = true
+        }
       }
     }
-  }
 
-  ////////////////////////////////////////////////////
-  //exit with error if not authorized
-  if (!authed) {
-    report.addRow("Unauthorized vote.")
-    await notify({
-      text: report.print(),
-      config,
-      service: command,
-      response_url: req.body.response_url
-    })
-    return false
+    ////////////////////////////////////////////////////
+    //exit with error if not authorized
+    if (!authed) {
+      report.addRow("Unauthorized vote.")
+      await notify({
+        text: report.print(),
+        config,
+        service: command,
+        response_url: req.body.response_url
+      })
+      return false
+    }
+  } catch (e) {
+    console.log("Caught Error:", e)
   }
 
   try {
@@ -105,24 +112,10 @@ export default async ({ req, config }: { req: Request, config: LntConfig }): Pro
         console.log(`\n\n\n=========== signAndBroadcast \n\n\n`, res_tx)
       }
 
-      if (res_tx?.transactionHash?.length) {
-        ////////////////////////////////////////////////////
-        //if successful tx, update vote in database
-        let res = await dbInstance.exec("updateProposal",
-          {
-            variables: {
-              chain_id: network.chain_id,
-              proposal_id,
-              option: optionNumber,
-              notes,
-            },
-            whereObject: {
-              chain_id: "_eq",
-              proposal_id: "_eq",
-            },
-            setArray: ["option", "notes"]
-          })
 
+      ////////////////////////////////////////////////////
+      //successful tx, notify
+      if (res_tx?.transactionHash?.length) {
 
         ////////////////////////////////////////////////////
         //prep report
@@ -132,25 +125,77 @@ export default async ({ req, config }: { req: Request, config: LntConfig }): Pro
         report.addRow(`Note: ${notes}`)
         report.backticks()
 
+        await notify({
+          text: report.print(), config, service: command,
+          response_url: req.body.response_url
+        })
+
+        ////////////////////////////////////////////////////
+        //if storing in database
+        if (dbInstance) {
+          await storeVoteInDB({
+            chain_id: network.chain_id,
+            proposal_id,
+            option: optionNumber,
+            notes,
+          })
+        }
 
       } else {
         report.addRow(`🚨 *Error Executing Vote on Prop*: ${chain} ${proposal_id}`)
       }
 
     } catch (e) {
-      console.log(e)
+      console.log("Caught Error:", e)
       report.addRow(`🚨 *Error Signing & Broadcasting Vote*: ${chain} ${proposal_id}: ${e.message}`)
     }
 
   } catch (e) {
-    console.log(e)
+    console.log("Caught Error:", e)
     report.addRow(`🚨 *Error Forumlating Vote*: ${req.body["text"]}`)
   }
 
-  await notify({
-    text: report.print(), config, service: command,
-    response_url: req.body.response_url
-  })
+  return true
+}
+
+const storeVoteInDB = async (variables: any): Promise<boolean> => {
+
+  try {
+    ////////////////////////////////////////////////////
+    //check if already voted
+    let res = await dbInstance.exec("getProposal", {
+      variables: {
+        chain_id: variables.chain_id,
+        proposal_id: variables.proposal_id
+      },
+      whereObject: {
+        chain_id: "_eq",
+        proposal_id: "_eq",
+      },
+    });
+
+    //if proposal found, update with new vote info
+    if (res.data?.proposals?.length) {
+      await dbInstance.exec("updateProposal",
+        {
+          variables,
+          whereObject: {
+            chain_id: "_eq",
+            proposal_id: "_eq",
+          },
+          setArray: ["option", "notes"]
+        })
+
+    } else {
+      //else proposal not found, insert
+      await dbInstance.exec("insertProposal", {
+        variables
+      });
+    }
+
+  } catch (e) {
+    console.log("Caught Error:", e)
+  }
 
   return true
 }

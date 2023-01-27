@@ -11,7 +11,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
 
   ////////////////////////////////////////////////////
   //start interval service
-  Interval.init(service.uuid, service.count_force_notify);
+  Interval.init(service.uuid, service.force_notify_count);
   Interval.inc(service.uuid);
   Interval.status({
     info: `${config.title} ${service.title}`,

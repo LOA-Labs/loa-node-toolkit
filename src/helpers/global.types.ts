@@ -5,7 +5,7 @@ export type Service = {
   run_on_start?: boolean
   title: string
   cron: string
-  count_force_notify: number
+  force_notify_count: number
   count_active_notify?: number
   notify?: object
   uuid: string | undefined
@@ -15,7 +15,7 @@ export type Command = {
   enabled?: boolean
   title: string
   use_mnemonic: string
-  count_force_notify: number
+  force_notify_count: number
   credentials?: object
   notify?: object
 }

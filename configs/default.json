@@ -21,10 +21,22 @@
       "run_on_start": true,
       "title": "Status Service",
       "cron": "*/5 * * * *",
-      "count_force_notify": 72,
+      "force_notify_count": 72,
       "notify": {
         "discord": "#node-monitor",
         "slack": "#node-monitor"
+      }
+    },
+    "proposals": {
+      "enabled": false,
+      "run_on_start": false,
+      "title": "Proposal Check",
+      "cron": "*/15 * * * *",
+      "force_notify_count": 12,
+      "active_notify_count": 6,
+      "notify": {
+        "slack": "#gov-monitor",
+        "discord": "#gov-monitor"
       }
     },
     "rewards": {
@@ -36,18 +48,6 @@
       "notify": {
         "slack": "#node-monitor",
         "discord": "#node-monitor"
-      }
-    },
-    "proposals": {
-      "enabled": false,
-      "run_on_start": false,
-      "title": "Proposal Check",
-      "cron": "15 * * * *",
-      "count_force_notify": 12,
-      "count_enabled_notify": 6,
-      "notify": {
-        "slack": "#gov-monitor",
-        "discord": "#gov-monitor"
       }
     }
   },

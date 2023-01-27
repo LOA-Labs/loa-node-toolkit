@@ -1,6 +1,6 @@
 {
   "name": "loa-node-toolkit",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "main": "src/index.ts",
   "license": "MIT",
   "scripts": {

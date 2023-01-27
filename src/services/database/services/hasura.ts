@@ -52,6 +52,7 @@ export const dbMethods = {
     let setKeyValuePairs = setArray.map(name => `${name}:\$${name}`)
     return `_set: {${setKeyValuePairs.join(',')}}`
   },
+
   updateProposal: async ({ variables, whereObject, setArray }) => {
 
     const propsList = dbMethods.getPropsList(props)
@@ -77,12 +78,32 @@ export const dbMethods = {
 
   },
 
+  getProposal: async ({ variables, whereObject, setArray }: any) => {
+    console.log(variables, whereObject)
+    const propsList = dbMethods.getPropsList(props)
+    const propsTypeValues = dbMethods.getTypeValues(props, variables, ['uuid'])
+    const whereQuery = dbMethods.getWhereQuery(whereObject)
+
+    let body = JSON.stringify({
+      query: `
+			query getProposal(${propsTypeValues}) {
+        proposals(${whereQuery}) {
+          ${propsList}
+        }
+			}
+			`
+    })
+    // console.log(body)
+    let res = await dbMethods.dbExec(body)
+    return res
+  },
+
   getActiveProposals: async ({ timestamp }) => {
 
     const propsList = dbMethods.getPropsList(props)
     let body = JSON.stringify({
       query: `
-			query MyQuery($_gte: timestamptz = "${timestamp}") {
+			query getActiveProposals($_gte: timestamptz = "${timestamp}") {
 			proposals(where: {voting_end_time: {_gte: $_gte}}) {
 				${propsList}
 			}
@@ -92,6 +113,7 @@ export const dbMethods = {
     let res = await dbMethods.dbExec(body)
     return res
   },
+
   insertProposal: async ({ variables }) => {
 
     const propsList = dbMethods.getPropsList(props)

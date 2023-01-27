@@ -1,7 +1,7 @@
 Highly configurable and lightweight Nodejs toolkit for monitoring, governing, and financing validator nodes on Cosmos.
-
+​
 [Installation](#installation)
-
+​
 * Nodejs toolset to monitor validator uptime and diskspace, automate rewards and restaking, monitor and vote on governance proposals. 
 ​
 * Takes a lightweight approach to node monitoring and automation. Nodejs instance(s) can run on its own node, or on validator node.
@@ -13,15 +13,16 @@ Highly configurable and lightweight Nodejs toolkit for monitoring, governing, an
 * Each service runs on its own cron schedule, frequency of checkins and notifications can be customized.
 ​
 ## Monitoring Checks fed into Slack Channel
-<img width="661" alt="Oszz9ZRWMFU_ZvHJ7vKtrj2H6Ml4bLE4rACcLa4CGIERMJ9ib1wKOE_bVqdsat8PhEc63KkE2PlaxpM3l9R7HP52YL340IglOUHZrCdMAfNmUcrfVplJmHRBUXLX" src="https://user-images.githubusercontent.com/9093152/214908503-4a43fb96-df63-4d5e-ae94-972252bf7423.png">
-
+![Monitoring Checks](https://pitch-assets.imgix.net/077a8f6e-0166-4a5d-92d3-c6b6e899c655)
 ​
 ## Automatic Rewards Withdrawals and Restaking Daily Compounding Report
-![Auto Rewards and Auto Restaking](https://user-images.githubusercontent.com/9093152/214908668-5fd3bd06-9bd2-4736-bffb-f4f36f954b57.png)
-
-## Gov Proposal Checks fed into private Slack Channel, also Monitoring alert shown with comment thread & Governance Votes Execution with Slack (or Discord) Command from private channel, also gov disccussion in comment thread
-![Proposal Checks & Executing Governance Votes](https://user-images.githubusercontent.com/9093152/214908831-1e3acc9a-43fe-4d2d-9c98-8b6c4c06c2a5.png)
-
+![Auto Rewards and Auto Restaking](https://pitch-assets.imgix.net/c1ae489d-8981-4f56-adce-e517f0b266fb)
+​
+## Gov Proposal Checks fed into private Slack Channel, also Monitoring alert shown with comment thread
+![Proposal Checks](https://pitch-assets.imgix.net/e84e60af-ec08-4f71-bc0a-0251332bdeb2)
+​
+## Governance Votes Execution with Slack (or Discord) Command from private channel, also gov disccussion in comment thread
+![Executing Governance Votes](https://pitch-assets.imgix.net/0bc1edd2-77ac-46cb-b014-2adf1db5339f)
 ​
 ## Installation
 ​
@@ -45,10 +46,9 @@ Configure (use your favorite editor)
 vim configs/default.json
 ```
 
-### Status Service
+### 1. Status Service
 
 The most basic service is Status, so let's begin with there. Under "networks" section, update "name", "chain_id", and "rpc" with your chain/node's information. This are the only three settings required for Status service:
-
 ```
     {
       "name": "regen",
@@ -71,8 +71,7 @@ After restarting your node, http://<IP address>:26657 should now show the defaul
 
 If you do not wish your RPC server to be public, you can use UFW firewall to allow access to only your known IP addresses. 
 
-### Status service configs:
-
+**Status service configs:**
 ```
     "status": {
       "enabled": true,
@@ -81,7 +80,7 @@ If you do not wish your RPC server to be public, you can use UFW firewall to all
       //check status every 5 minutes
       "cron": "*/5 * * * *", 
       //notify every 72 checks (every 6 hours)
-      "count_force_notify": 72, 
+      "force_notify_count": 72, 
       //channel configs status notifications
       "notify": { 
         "discord": "#node-monitor", 
@@ -90,11 +89,9 @@ If you do not wish your RPC server to be public, you can use UFW firewall to all
     }
 ```
 
-### Notification configs:
-
-* Setting up [Discord webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
-
-* Setting up [Slack webhook](https://api.slack.com/messaging/webhooks)
+**Notification configs:**
+Setting up [Discord webhook](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks)
+Setting up [Slack webhook](https://api.slack.com/messaging/webhooks)
 ```
 "notifications": {
     "discord": {
@@ -115,6 +112,60 @@ Once networks, services, and notifications are configured, run:
 
 ```
 npm run build
-
+​
 npm run start
 ```
+
+### 2. Proposals Service
+
+Edit `configs/default.json`
+
+Set `enabled` to true. Set `run_on_start` to true also for testing.
+
+Default cron is set to check for new government proposals every 15 minutes.
+
+`force_notify_count` is set to send proposal status every 64 checks, which will send every 12 hours regardless of any new proposals. 
+
+`active_notify_count` is set to send proposal status every 16 checks, which will send every 3 hours if there are open proposals of which the validator has not voted.
+
+Notify is set here to same `#node-monitor` channel configuration, but sending proposal notices to a different channel is also possible.
+
+```
+    "proposals": {
+      "enabled": true,
+      "run_on_start": true,
+      "title": "Proposal Check",
+      "cron": "*/15 * * * *",
+      "force_notify_count": 64,
+      "active_notify_count": 16,
+      "notify": {
+        "slack": "#node-monitor",
+        "discord": "#node-monitor"
+      }
+    }
+```
+
+
+### 3. Vote Command
+
+**Note: [Requires Authz](#authz)**
+
+Step-by-step secure voting from within Slack or Discord instructions coming soon.
+
+### 4. Rewards Service
+
+**Note: [Requires Authz](#authz)**
+
+Step-by-step Rewards Claiming and Restaking Service configuration instructions coming soon.
+
+### 5. Distribution Service
+
+**Note: [Requires Authz](#authz)**
+
+Step-by-step auto-funds distribution configuration instructions coming soon.
+
+## Authz
+
+Step-by-step Authz instructions coming soon.
+
+Also see: [https://docs.cosmos.network/v0.47/modules/authz](https://docs.cosmos.network/v0.47/modules/authz)
