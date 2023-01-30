@@ -4,7 +4,7 @@ Highly configurable and lightweight Nodejs toolkit for monitoring, governing, an
 
 [Installation](#installation)
 
-* Nodejs toolset to monitor validator uptime and diskspace, automate rewards and restaking, monitor and vote on governance proposals. 
+* Nodejs toolset to monitor validator uptime and diskspace, automate rewards and restaking, monitor and vote on governance proposals, websocket watch wallet or validator for transactions. 
 
 * Takes a lightweight approach to node monitoring and automation. Nodejs instance(s) can run on its own node, or on validator node.
 
@@ -14,9 +14,12 @@ Highly configurable and lightweight Nodejs toolkit for monitoring, governing, an
 ​
 * Each service runs on its own cron schedule, frequency of checkins and notifications can be customized.
 
-### Monitoring Checks fed into Slack Channel
+## Monitoring Checks fed into Slack Channel
 ![Monitoring Checks](https://pitch-assets.imgix.net/077a8f6e-0166-4a5d-92d3-c6b6e899c655)
-​
+
+## WS Watcher for events that meet your notification thresholds 
+![image](https://user-images.githubusercontent.com/9093152/215513855-1490feb7-a0d2-466b-9833-36191f9e8b76.png)
+
 ## Automatic Rewards Withdrawals and Restaking Daily Compounding Report
 ![Auto Rewards and Auto Restaking](https://pitch-assets.imgix.net/c1ae489d-8981-4f56-adce-e517f0b266fb)
 ​
@@ -169,5 +172,7 @@ Step-by-step auto-funds distribution configuration instructions coming soon.
 ## Authz
 
 Step-by-step Authz instructions coming soon.
+
+Authz grant message [templates](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates)
 
 Also see: [https://docs.cosmos.network/v0.47/modules/authz](https://docs.cosmos.network/v0.47/modules/authz)
