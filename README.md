@@ -171,8 +171,34 @@ Step-by-step auto-funds distribution configuration instructions coming soon.
 
 ## Authz
 
-Step-by-step Authz instructions coming soon.
+Using authz to give restricted permissions to a bot wallet, many validator tasks can run automatically using the LNT cron service configurations. It is important to set up Authz correctly to maintain asset security even if the bot seed phrase is accidently leaked. The bot seed phrase is used to generate the offline signer which has permissions to execute certain tasks on behalf of the validator. 
 
-Authz grant message [templates](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates)
+Authz grant message [templates are located here](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates).
+
+You may choose the [authz-all.json](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates/authz-all.json) template and grant everything the bot account might utilize, or you may wish to break up permissions granuarly:
+
+* [Voting (authz-voting.json)](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates/authz-voting.json) - gives permission to create proposals and vote on behalf of granter. This feature can be used to vote from within a private Slack or Discord channel.
+
+* [Managing Validator (authz-managing.json)](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates/authz-managing.json) - edit validator info, unjail.
+
+* [Restaking (authz-restaking.json)](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates/authz-restaking.json) - withdraw rewards, withdraw commissions, restake. 
+
+* [Sending (authz-sending.json)](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates/authz-sending.json) - Important to set sending limits, and even better use with Cosmos SDK v47 [Sending (authz-sending-v47.json)](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates/authz-sending-v47.json) with allow_list option. Sending feature can automated distributions of funds to specified wallets.
+
+* [Fee Grant (fee-grant.json)](https://github.com/LOA-Labs/loa-node-toolkit/tree/main/templates/fee-grant.json) - not a part of Authz but an important piece to the automation stack. Fee Grant message is included in all of the authz templates. If Fee Grant is not granted, the bot wallet needs to have funds  periodically added to pay for gas to execute transactions on behalf of validator.
+
+**Authz steps:**
+
+1. Create a new wallet for the bot account and send a tiny amount to it to establish its presnce on chain
+2. Add the bot account seed phrase to the config file
+3. Using one of the Authz json templates:
+- replace the grantee fields with the bot account's bech32 address
+- replace the grater fields with the validator's bech32 address
+- replace the denoms with target chain's denom
+- adjust any other configurations
+4. Using the CLI execute `<daemon> tx sign <authz-template.json> --from <validator bech32> > signed-authz-template.json`
+5. Then broadcast `<daemon> tx broadcast signed-authz-template.json --from <validator bech32>`
+6. You can check which authz permissions have been granted with `<daemon> q authz grants-by-grantee <bot account's bech32>`
+7. You can fee grant with `<daemon> q feegrant grants-by-grantee <bot account's bech32>`
 
 Also see: [https://docs.cosmos.network/v0.47/modules/authz](https://docs.cosmos.network/v0.47/modules/authz)
