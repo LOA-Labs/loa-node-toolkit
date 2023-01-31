@@ -15,7 +15,8 @@ Highly configurable and lightweight Nodejs toolkit for monitoring, governing, an
 * Each service runs on its own cron schedule, frequency of checkins and notifications can be customized.
 
 ## Monitoring Checks fed into Slack Channel
-![Monitoring Checks](https://pitch-assets.imgix.net/077a8f6e-0166-4a5d-92d3-c6b6e899c655)
+
+![Monitoring Checks](https://user-images.githubusercontent.com/9093152/215628279-bafd4c8d-3b3c-49cd-b634-c365fbc13796.png)
 
 ## WS Watcher for events that meet your notification thresholds 
 ![image](https://user-images.githubusercontent.com/9093152/215513855-1490feb7-a0d2-466b-9833-36191f9e8b76.png)
