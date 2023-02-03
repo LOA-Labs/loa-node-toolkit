@@ -6,7 +6,8 @@ export type Service = {
   title: string
   cron: string
   force_notify_count: number
-  count_active_notify?: number
+  active_notify_count?: number
+  ws_watchers?: any
   notify?: object
   uuid: string | undefined
 }
@@ -50,11 +51,12 @@ export type NetworkConfig = {
   denom: string
   gas_prices: string
   gas_auto: boolean
-  rpc: string | HttpEndpoint
+  rpc: string
   disk_check_endpoint?: string
   granter: string
   valoper: string
   restake: number
   network_handles?: object
   filter_services?: string[]
+  explorer?: string
 }

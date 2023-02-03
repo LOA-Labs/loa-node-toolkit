@@ -1,6 +1,6 @@
 {
   "name": "loa-node-toolkit",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "main": "src/index.ts",
   "license": "MIT",
   "scripts": {
@@ -12,7 +12,8 @@
     "devprod": "nodemon --config nodemon.prod.json src/index.ts",
     "dev": "NODE_ENV=development nodemon --config nodemon.json src/index.ts",
     "start-ts": "nodemon --config nodemon-prod.json src/index.ts",
-    "dev:debug": "nodemon --config nodemon.json --inspect-brk src/index.ts"
+    "dev:debug": "nodemon --config nodemon.json --inspect-brk src/index.ts",
+    "deploy": "gpl; nrb; apprestart;"
   },
   "devDependencies": {
     "@types/node": "^14.11.2",
@@ -25,7 +26,10 @@
     "@cosmjs/stargate": "^0.29.5",
     "@cosmjs/tendermint-rpc": "^0.29.5",
     "@slack/webhook": "^6.1.0",
+    "@types/bech32": "^1.1.4",
     "axios": "^0.27.2",
+    "bech32": "^2.0.0",
+    "bip32": "^3.1.0",
     "check-disk-space": "^3.3.1",
     "copyfiles": "^2.4.1",
     "cosmjs-types": "^0.5.1",

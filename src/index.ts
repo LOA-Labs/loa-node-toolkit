@@ -32,7 +32,10 @@ report.header(`LOA Node Toolkit v${package_json.version}\nStart: \t${startTime} 
 const jobs: Cron[] = [];
 const CONFIGS: LntConfig[] = [];
 
+
+
 (async () => {
+
   const SERVICES = { status, rewards, proposals, distribution }
   const configDir: string = __dirname + `/../configs/`
   const configFiles: string[] = await readdirSync(configDir)

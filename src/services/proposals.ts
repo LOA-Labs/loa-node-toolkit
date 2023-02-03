@@ -21,11 +21,11 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
 
   try {
     ////////////////////////////////////////////////////
-    //start two interval services, one regular, one more frequent
-    const uuid_regular: string = service.uuid;
+    //start two interval counts, one regular, one more frequent
+    const uuid_regular: string = service.uuid + "-regular";
     const uuid_active: string = service.uuid + "-active";
     Interval.init(uuid_regular, service.force_notify_count);
-    Interval.init(uuid_active, service.count_active_notify);
+    Interval.init(uuid_active, service.active_notify_count);
     Interval.inc(uuid_regular);
     Interval.inc(uuid_active);
     Interval.status({
@@ -62,7 +62,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
           openProposalsOnChain.push(...proposalsArray);
         else {
           report.addRow(`\`====== ${network.name} ======\``);
-          report.addRow(`No enabled proposals found.`);
+          report.addRow(`No proposals in Voting Period.`);
         }
       }
 

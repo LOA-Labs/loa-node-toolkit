@@ -142,8 +142,12 @@ export const $fmt = (value: number, pad = 0): string => {
     .padStart(pad);
 };
 
-export const microToMacro = (value: string | number): number => {
-  return Number(value) / 1000000;
+export const microToMacro = (value: any): number => {
+  return parseInt(value) / 1000000;
 };
 
 
+export const icons = {
+  good: "✅",
+  bad: "🚨"
+}

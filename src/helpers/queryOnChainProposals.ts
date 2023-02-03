@@ -54,7 +54,7 @@ export const humanReadibleProposalStatus = (status: number): string => {
 }
 
 export const queryOnChainProposals = async ({ network, status }): Promise<OnChainProposalResult[]> => {
-  if (!network.rpc) return
+  if (!network.rpc) return []
   try {
     const tendermint = await Tendermint34Client.connect(network.rpc);
     const queryClient = new QueryClient(tendermint);

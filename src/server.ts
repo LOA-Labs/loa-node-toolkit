@@ -21,6 +21,16 @@ export default (CONFIGS: LntConfig[]) => {
   });
 
   app.use('/vote', vote);
+  app.use('/api', async (req: Request, res: Response) => {
+    try {
+      res.status(200).send({
+        "message": "Verification successful"
+      });
+
+    } catch (e) {
+      console.log("caught error", e)
+    }
+  });
 
   app.listen(port, () => {
 

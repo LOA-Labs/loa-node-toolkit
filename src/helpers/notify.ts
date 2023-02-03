@@ -38,7 +38,7 @@ export const notify = async ({ text, config, service, response_url = null }: Not
     if (typeof service.notify != "object") throw new Error(`Service notify object not configured.`)
     const msgServices: object = getMsgServices();
     const serviceKeys: string[] = Object.keys(service.notify);
-    const allowBroadcast: boolean = false;
+    const sendToChannels: boolean = false;
     let res = [];
 
     for (let index = 0; index < serviceKeys.length; index++) {
@@ -46,7 +46,7 @@ export const notify = async ({ text, config, service, response_url = null }: Not
 
       const msgService = msgServices[serviceKey];
 
-      let broadcast = process.env.NODE_ENV === "production" || allowBroadcast;
+      let broadcast = process.env.NODE_ENV === "production" || sendToChannels;
 
       try {
         const notificationConfig = checkNotificationConfig({

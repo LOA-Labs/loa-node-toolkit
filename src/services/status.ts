@@ -2,8 +2,10 @@ import axios from "axios";
 import { notify } from "../helpers/notify";
 import Report from "../helpers/class.report";
 import { Interval } from "../helpers/interval.factory";
-import { serviceFiltered } from "../helpers/utils";
+import { serviceFiltered, icons } from "../helpers/utils";
 import { LntConfig, NetworkConfig, Service } from "../helpers/global.types";
+import { socketFactory, WebsocketClientObject } from "../helpers/socket.factory";
+import { delegationsEventHandler, getReqMsgDelegate, getReqMsgUnDelegate, statusRequest } from "../helpers/rpcQueries";
 
 const localStatusTesting = true;
 
@@ -24,7 +26,20 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
   let messageType = "Checkin";
   let latest_block_time_maxdif_seconds = 60;
   let disk_alert_threshold = 96;
-  let resultsArray = [];
+
+  const report = new Report();
+
+  const colWidths = [5, 20, 5, 10, 10, 15]
+  report.backticks().addRow(
+    report.startCol(colWidths)
+      .addCol("///", "left")
+      .addCol("Network", "left")
+      .addCol("Disk", "right")
+      .addCol("Height", "right")
+      .addCol("Elapsed", "right")
+      .addCol("Voting Power", "right")
+      .endCol()
+  )
 
   for (let index = 0; index < config.networks.length; index++) {
 
@@ -33,35 +48,39 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
 
     ////////////////////////////////////////////////////
     //reset defaults for individual networks
-    let icon = "✅";
+    let icon = icons.good;
     let unix_time_now = 0;
     let unix_time_block = 0;
     let latest_block_time = 0;
     let latest_block_height = 0;
     let catching_up = true;
+    let voting_power = 0;
 
     if (process.env.NODE_ENV == "production" || localStatusTesting) {
       try {
+
+        const WS: WebsocketClientObject = socketFactory(network.rpc)
         ////////////////////////////////////////////////////
         //query rpc for status
-        const { data: rpc_status }: any = await axios.get(`${network.rpc}/status`);
-        // console.log(`${network.name} rpc_status.result.sync_info`, rpc_status.result.sync_info);
+        let rpc_status = await WS.client.execute(statusRequest)
+
+        ////////////////////////////////////////////////////
+        //add subscriptions
+        WS.addSubscription({ key: "_getReqMsgDelegate", config, network, service, notify, requestFunction: getReqMsgDelegate, eventHandler: delegationsEventHandler })
+        WS.addSubscription({ key: "_getReqMsgUnDelegate", config, network, service, notify, requestFunction: getReqMsgUnDelegate, eventHandler: delegationsEventHandler })
+
+        voting_power = rpc_status.result.validator_info.voting_power;
         latest_block_height = rpc_status.result.sync_info.latest_block_height;
         catching_up = rpc_status.result.sync_info.catching_up;
         latest_block_time = rpc_status.result.sync_info.latest_block_time;
         unix_time_now = new Date().getTime() / 1000;
         unix_time_block = new Date(latest_block_time).getTime() / 1000;
-        // console.log(unix_time_now,unix_time_block)
+
       } catch (e) {
-        console.log(e)
-        if (e.config?.url && e.message) e.message += `: ${e.config?.url}`;
-        resultsArray.push({
-          id: network.chain_id,
-          text: e.message || JSON.stringify(e),
-        });
-        notifyFlag = true;
+        if (e.config?.url && e.message) e.message += `: ${e.config?.url}`; notifyFlag = true;
         messageType = "RPC ERROR";
-        icon = "🚨";
+        icon = icons.bad;
+        report.addRow(e.message)
       }
     }
 
@@ -75,7 +94,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
     ) {
       notifyFlag = true;
       messageType = "BLOCK ALERT!";
-      icon = "🚨";
+      icon = icons.bad;
     }
 
     ////////////////////////////////////////////////////
@@ -93,21 +112,26 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         if (diskPercent >= disk_alert_threshold) {
           notifyFlag = true;
           messageType = "DISK ALERT!";
-          icon = "🚨";
+          icon = icons.bad;
         }
-        diskReport = `${diskData.data.percent}%`.padStart(3);
+        diskReport = `${diskData.data.percent}%`;
       } catch (e) {
         console.log(e);
       }
     }
+    ////////////////////////////////////////////////////
+    //add report row with data results
+    report.addRow(
+      report.startCol(colWidths)
+        .addCol(icon, "left")
+        .addCol(network.chain_id, "left")
+        .addCol(diskReport, "right")
+        .addCol(latest_block_height, "right")
+        .addCol(`${latest_block_time_dif_seconds.toFixed(1)}s`, "right")
+        .addCol(voting_power, "right")
+        .endCol()
+    )
 
-    //push to results array for reporting
-    resultsArray.push({
-      id: network.chain_id,
-      text: `${icon} ${network.chain_id.padEnd(
-        18
-      )} ${diskReport} \tHeight: ${latest_block_height.toString().padEnd(9)}\tET: ${latest_block_time_dif_seconds.toFixed(1)}s`.padStart(6),
-    });
   }
 
   if (Interval.complete(service.uuid, service.run_on_start)) {
@@ -115,9 +139,9 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
     Interval.reset(service.uuid);
   }
 
-  const report = new Report();
-  report.addRow(`\n*Monitoring ${messageType}*`).backticks();
-  resultsArray.map((o) => report.addRow(o.text));
+
+  report.addHeader(`\n*Monitoring ${messageType}*`)
+
   let text = report.backticks().print();
 
   if (notifyFlag) {

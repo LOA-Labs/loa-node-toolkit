@@ -1,5 +1,8 @@
 export default class Report {
   private rows: any = [];
+  private cols: any = "";
+  private colWidths: number[] = [];
+  private colIndex: number = 0;
   constructor() { }
 
   private div: string = `==============================`
@@ -19,6 +22,28 @@ export default class Report {
   }
   public addRow(data: string): Report {
     this.rows.push(data)
+    return this
+  }
+  public addCol(data: any, align: string = "left", pad?: number): Report {
+    data = data.toString()
+    pad = this.colWidths[this.colIndex] !== undefined ? this.colWidths[this.colIndex] : pad != undefined ? pad : 0
+    this.cols += align == "left" ? data.padEnd(pad) : data.padStart(pad)
+    this.colIndex++
+    return this
+  }
+  public startCol(colWidths: number[]): Report {
+    this.colWidths = colWidths
+    this.colIndex = 0
+    return this
+  }
+  public endCol(): string {
+    let res = this.cols
+    this.cols = ""
+    this.colIndex = 0
+    return res
+  }
+  public addHeader(data: string): Report {
+    this.rows.unshift(data)
     return this
   }
   public backticks(): Report {
