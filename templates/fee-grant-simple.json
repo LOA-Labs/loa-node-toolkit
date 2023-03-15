@@ -2,23 +2,12 @@
   "body": {
     "messages": [
       {
-        "@type": "/cosmos.authz.v1beta1.MsgGrant",
+        "@type": "/cosmos.feegrant.v1beta1.MsgGrantAllowance",
         "granter": "cosmos1a...",
         "grantee": "cosmos1b...",
-        "grant": {
-          "authorization": {
-            "@type": "/cosmos.bank.v1beta1.SendAuthorization",
-            "spend_limit": [
-              {
-                "denom": "uatom",
-                "amount": "100000"
-              }
-            ],
-            "allow_list": [
-              "cosmos...",
-              "cosmos..."
-            ]
-          },
+        "allowance": {
+          "@type": "/cosmos.feegrant.v1beta1.BasicAllowance",
+          "spend_limit": [],
           "expiration": null
         }
       }

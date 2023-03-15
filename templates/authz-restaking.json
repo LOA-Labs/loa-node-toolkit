@@ -3,8 +3,8 @@
     "messages": [
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1...",
-        "grantee": "cosmos1...",
+        "granter": "cosmos1a...",
+        "grantee": "cosmos1b...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -14,8 +14,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1...",
-        "grantee": "cosmos1...",
+        "granter": "cosmos1a...",
+        "grantee": "cosmos1b...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -25,8 +25,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1...",
-        "grantee": "cosmos1...",
+        "granter": "cosmos1a...",
+        "grantee": "cosmos1b...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",

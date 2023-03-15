@@ -3,8 +3,8 @@
     "messages": [
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos...",
-        "grantee": "cosmos...",
+        "granter": "cosmos1a...",
+        "grantee": "cosmos1b...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.bank.v1beta1.SendAuthorization",
