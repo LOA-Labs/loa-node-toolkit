@@ -3,8 +3,8 @@
     "messages": [
       {
         "@type": "/cosmos.feegrant.v1beta1.MsgGrantAllowance",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
         "allowance": {
           "@type": "/cosmos.feegrant.v1beta1.PeriodicAllowance",
           "basic": {

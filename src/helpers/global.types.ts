@@ -7,7 +7,7 @@ export type Service = {
   cron: string
   force_notify_count: number
   active_notify_count?: number
-  ws_watchers?: any
+  query?: any
   notify?: object
   uuid: string | undefined
 }
@@ -49,8 +49,8 @@ export type NetworkConfig = {
   chain_id: string
   coingecko_id?: string
   denom: string
-  gas_prices: string
-  gas_auto: boolean
+  gas_prices?: number
+  gas?: number
   rpc: string
   disk_check_endpoint?: string
   granter: string
@@ -59,4 +59,6 @@ export type NetworkConfig = {
   network_handles?: object
   filter_services?: string[]
   explorer?: string
+  exponent?: number
+  feegrant_enabled: undefined | boolean
 }

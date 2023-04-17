@@ -1,6 +1,6 @@
 {
   "name": "loa-node-toolkit",
-  "version": "0.2.6",
+  "version": "0.3.1",
   "main": "src/index.ts",
   "license": "MIT",
   "scripts": {
@@ -8,7 +8,7 @@
     "copy-files": "copyfiles -u 1 src/configs/*.json dist/",
     "start": "NODE_ENV=production node ./dist/index.js",
     "start-ts-old": "NODE_ENV=production node -r ts-node/register ./src/index.ts",
-    "build": "npm run clean && tsc --allowSyntheticDefaultImports src/*.ts --outDir ./dist && npm run copy-files",
+    "build": "npm run clean && tsc --allowSyntheticDefaultImports src/*.ts --outDir ./dist",
     "devprod": "nodemon --config nodemon.prod.json src/index.ts",
     "dev": "NODE_ENV=development nodemon --config nodemon.json src/index.ts",
     "start-ts": "nodemon --config nodemon-prod.json src/index.ts",

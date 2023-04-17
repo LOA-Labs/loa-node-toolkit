@@ -1,4 +1,4 @@
-import { humanRelativeDate, serviceFiltered } from "../helpers/utils";
+import { humanRelativeDate, serviceFiltered, icons } from "../helpers/utils";
 import {
   queryOnChainProposals,
   humanReadibleProposalStatus,
@@ -42,8 +42,8 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
     const report = new Report();
     report.addRow(`*${config.title} ${service.title}*`);
 
-    let notifyFlag = false;
-    let forceNotify = false;
+    let proposalNotVoted = false;
+    let newProposal = false;
 
     if (process.env.NODE_ENV == "production" || localTesting) {
 
@@ -52,7 +52,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
       const openProposalsOnChain = [];
       for (let index = 0; index < config.networks.length; index++) {
         const network: NetworkConfig = config.networks[index];
-        if (serviceFiltered("governance", network) || network?.enabled === false) continue;
+        if (serviceFiltered("proposals", network) || network?.enabled === false) continue;
 
         let proposalsArray: OnChainProposalResult[] = await queryOnChainProposals({
           network,
@@ -61,7 +61,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         if (proposalsArray.length > 0)
           openProposalsOnChain.push(...proposalsArray);
         else {
-          report.addRow(`\`====== ${network.name} ======\``);
+          report.addRow(`\n\`====== ${network.name} ======\``);
           report.addRow(`No proposals in Voting Period.`);
         }
       }
@@ -78,6 +78,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         ////////////////////////////////////////////////////
         //check each on-chain proposal 
         for (let index = 0; index < openProposalsOnChain.length; index++) {
+
           const chainProposal = openProposalsOnChain[index];
 
           ////////////////////////////////////////////////////
@@ -88,21 +89,26 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
               (item: any) => item.chain_id == curChainId
             );
             report.addRow(
-              `\`====== ${curNetworkConfig.name || curChainId} ======\``
+              `\n\`====== ${curNetworkConfig.name || curChainId} ======\``
             );
           }
 
           let uniqueProposalId = `${curNetworkConfig.name}_${chainProposal.id}`;
-          let voteIcon = "✅";
+          let voteIcon = icons.good;
+
           ////////////////////////////////////////////////////
-          //if has not been voted on yet, force notify
+          //if proposal has not been voted on yet, set notifications
           if (parseInt(chainProposal.option) === 0) {
+
+            proposalNotVoted = true;
+            voteIcon = icons.bad;
+
+            //if not in newProposalNotifications array, forceNotification no matter the inverval state
             if (newProposalNotifications.indexOf(uniqueProposalId) === -1) {
-              forceNotify = true; //force notify if we've never seen this proposal
+              newProposal = true;
+              newProposalNotifications.push(uniqueProposalId);
             }
-            notifyFlag = true;
-            voteIcon = "🚨";
-            newProposalNotifications.push(uniqueProposalId);
+
           }
 
           ////////////////////////////////////////////////////
@@ -132,24 +138,24 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
     let confirmNotify = false;
 
     ////////////////////////////////////////////////////
-    //regular proposal checkin interval
+    //regular proposal checkin interval, always send at specified interval regardless of voted
     if (Interval.complete(uuid_regular, service.run_on_start)) {
       confirmNotify = true;
       Interval.reset(uuid_regular);
-      Interval.reset(uuid_active);
-      newProposalNotifications.length = 0; //flush from memory at regular notification interval
+      newProposalNotifications.length = 0; //flush from memory when notifying
     }
 
     ////////////////////////////////////////////////////
-    //reduce rate of notifications after open proposal has already triggered notification
-    if (Interval.complete(uuid_active, false) && notifyFlag === true) {
-      confirmNotify = true;
+    //if the shorter uuid_active interval is reached
+    if (Interval.complete(uuid_active, false)) {
+      //and active proposal not voted on
+      if (proposalNotVoted === true) confirmNotify = true;
       Interval.reset(uuid_active);
     }
 
     ////////////////////////////////////////////////////
-    //confirmNotify triggered at regular intervals, force notify triggered on new proposals
-    if (confirmNotify || forceNotify) {
+    //confirmNotify triggered at regular intervals, force notify triggered on new proposals only
+    if (confirmNotify || newProposal) {
       await notify({ text: report.print(), config, service });
     }
 

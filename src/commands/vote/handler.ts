@@ -22,9 +22,9 @@ const handler = async (req: Request, res: Response) => {
     }
 
     if (config) {
-      res.status(200).send("Processing request...");
+      res.status(200).send(`Processing request... \n\`${req.body.text}\``);
       return await tx_vote({ req, config })
-    } else throw new Error("No config. Could not Process request.")
+    } else throw new Error("No config found. Could not process vote request.")
 
   } catch (e) {
     console.log("VOTE ERROR", e)

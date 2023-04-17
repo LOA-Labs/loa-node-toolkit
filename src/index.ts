@@ -3,6 +3,7 @@ LOA LABS Nodejs Toolkit {ia}
 index.ts entrypoint
 */
 
+
 //load env variables defined in .env file
 require('dotenv').config()
 const package_json = require('../package.json');
@@ -22,106 +23,117 @@ import rewards from './services/rewards'
 import proposals from './services/proposals'
 import distribution from './services/distribution'
 
+//ws services
+import watcher from './services/watcher'
+
 //types
 import { LntConfig, Service } from './helpers/global.types';
+import { icons } from './helpers/utils';
 
-const startTime = new Date().toISOString()
+try {
+  const startTime = new Date().toISOString()
 
-report.header(`LOA Node Toolkit v${package_json.version}\nStart: \t${startTime} \nENV: \t${process.env.NODE_ENV}`)
+  report.header(`LOA Node Toolkit v${package_json.version}\nStart: \t${startTime} \nENV: \t${process.env.NODE_ENV}`)
 
-const jobs: Cron[] = [];
-const CONFIGS: LntConfig[] = [];
+  const jobs: Cron[] = [];
+  const CONFIGS: LntConfig[] = [];
 
 
 
-(async () => {
+  (async () => {
 
-  const SERVICES = { status, rewards, proposals, distribution }
-  const configDir: string = __dirname + `/../configs/`
-  const configFiles: string[] = await readdirSync(configDir)
+    const SERVICES = { status, watcher, rewards, proposals, distribution }
+    const configDir: string = __dirname + `/../configs/`
+    const configFiles: string[] = await readdirSync(configDir)
 
-  //start services
-  //implement each json config found in configs folder
-  for (let i = 0; i < configFiles.length; i++) {
+    //start services
+    //implement each json config found in configs folder
+    for (let i = 0; i < configFiles.length; i++) {
 
-    const filePath: string = configDir + configFiles[i]
+      const filePath: string = configDir + configFiles[i]
 
-    let config: LntConfig
+      let config: LntConfig
 
-    try {
-      config = JSON.parse(await readFileSync(filePath, 'utf-8'))
-    } catch (e) {
-      console.log(`ERROR: Could not read config: ${filePath}`)
-      continue
-    }
-
-    try {
-
-      CONFIGS[configFiles[i].split(".").shift()] = config //index and store in memory
-
-      if (config.enabled === false) {
-        report.addRow(`Config Not Enabled: ${filePath}`)
+      try {
+        config = JSON.parse(await readFileSync(filePath, 'utf-8'))
+      } catch (e) {
+        console.log(`ERROR: Could not read config: ${filePath}`)
         continue
       }
 
-      report.addRow(`Config Enabled: ${filePath}`)
+      try {
 
-      const serviceKeys: string[] = Object.keys(config.services)
+        CONFIGS[configFiles[i].split(".").shift()] = config //index and store in memory
 
-      //schedule each service enabled in config
-      //no large queries, n^2 should be ok here
-      for (let j = 0; j < serviceKeys.length; j++) {
-
-        const serviceKey = serviceKeys[j]
-        const service: Service = config.services[serviceKey];
-
-        if (service.enabled === false) {
-          report.addRow(` Service Not Enabled: ${serviceKey}`)
+        if (config.enabled === false) {
+          report.section(`${icons.bad} Config Not Enabled: ${filePath}\n`)
           continue
         }
 
-        report.addRow(` Service Enabled: ${serviceKey}`)
+        report.section(`${icons.good} Config Enabled: ${filePath}\n`)
 
-        service.uuid = v4() //assign each service unique id
+        const serviceKeys: string[] = Object.keys(config.services)
 
-        try {
-          if (process.env.NODE_ENV === "production" || config.debug.SCHEDULE_CRON) {
+        //schedule each service enabled in config
+        //no large queries, n^2 should be ok here
+        let taskCount = 0
+        for (let j = 0; j < serviceKeys.length; j++) {
 
-            jobs[j] = new Cron(
-              service.cron,
-              { catch: true },
-              () => {
-
-                if (config.debug.TEST_CRON_ONLY) {
-                  report.addRow(`debug.TEST_CRON_ONLY is true. ${serviceKey}`)
-                  return
-                }
-
-                SERVICES[serviceKey]({ ...service }, config)
-              }
-            )
-
-            report.addRow(`\nTask ${j} - Cron started: [${config.title}] ${service.title}`)
-
-            if (service.run_on_start === true) {
-              report.addRow(`(Running on start)`)
-              SERVICES[serviceKey]({ ...service }, config)
-            }
-
+          const serviceKey = serviceKeys[j]
+          const service: Service = config.services[serviceKey];
+          if (service.enabled === false) {
+            report.addRow(`${icons.bad} [${serviceKey}] Service Not Enabled.`)
+            continue
           }
 
-        } catch (e) {
-          console.log(`ERROR: Could not run service: ${serviceKey}`, e)
+          report.addRow(`${icons.good} [${serviceKey}] Service Enabled.`)
+
+          service.uuid = v4() //assign each service unique id
+
+          try {
+            if (process.env.NODE_ENV === "production" || config.debug.SCHEDULE_CRON) {
+
+              if (service.cron) {
+                jobs[j] = new Cron(
+                  service.cron,
+                  { catch: true },
+                  () => {
+
+                    if (config.debug.TEST_CRON_ONLY) {
+                      report.addRow(`debug.TEST_CRON_ONLY is true. ${serviceKey}`)
+                      return
+                    }
+
+                    SERVICES[serviceKey]({ ...service }, config)
+                  }
+                )
+
+                report.addRow(`  * Task ${taskCount} - Cron started: ${config.title} ${service.title}`)
+                taskCount++
+              }
+
+              if (service.run_on_start === true) {
+                report.appendRow(` (Running on start)`)
+                SERVICES[serviceKey]({ ...service }, config)
+              }
+
+            }
+
+          } catch (e) {
+            console.log(`ERROR: Could not run service: ${serviceKey}`, e)
+          }
         }
-        report.section()
+      } catch (e) {
+        console.log(`Caught error:`, e)
       }
-    } catch (e) {
-      console.log(`Caught error:`, e)
     }
-  }
 
-  console.log(report.print())
+    console.log(report.print())
 
-  //start server to recieve commands
-  runServer(CONFIGS)
-})()
+    //start server to recieve commands
+    runServer(CONFIGS)
+  })()
+
+} catch (e) {
+  console.log("Caught top level error.", e)
+}

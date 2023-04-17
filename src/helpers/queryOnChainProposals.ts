@@ -14,6 +14,7 @@ export type OnChainProposalResult = {
   chain_id: string
   type: string
   voting_end_time: string
+  title: string
   description: string
   option: number
   status: ProposalStatus
@@ -62,9 +63,8 @@ export const queryOnChainProposals = async ({ network, status }): Promise<OnChai
     const QueryService = new QueryClientImpl(rpcClient);
     const request: QueryProposalsRequest = { proposalStatus: chainReadibleProposalStatus(status), voter: "", depositor: "" }
     let res: QueryProposalsResponse = await QueryService.Proposals(request);
-
     //network has enabled propsals
-    if (res.proposals.length) {
+    if (res.proposals?.length) {
       const proposalsParsed: OnChainProposalResult[] = []
       for (let index = 0; index < res.proposals.length; index++) {
 
@@ -74,15 +74,17 @@ export const queryOnChainProposals = async ({ network, status }): Promise<OnChai
           const request: QueryVoteRequest = { proposalId: prop.proposalId, voter: network.granter }
           resVote = await QueryService.Vote(request);
         } catch (e) {
-          console.log(`PROP ${network.name}  ${prop.proposalId} NO VOTE FOUND`)
+          console.log(`\tPROP ${network.name}  ${prop.proposalId} NO VOTE FOUND`)
         }
-
+        let description = unicodeToChar(new TextDecoder().decode(prop.content.value))
+        let title = description.replace(/[a-z][^�#\n]*/, "")
         proposalsParsed.push({
           proposal_id: prop.proposalId.low,
           chain_id: network.chain_id,
           type: prop.content.typeUrl.split(".").pop(),
           voting_end_time: new Date(prop.votingEndTime.seconds.low * 1000).toISOString(),
-          description: unicodeToChar(new TextDecoder().decode(prop.content.value)),
+          title,
+          description,
           option: resVote?.vote?.options?.[0].option ? Number(resVote?.vote?.options?.[0].option) : 0,
           status: prop.status
         })
@@ -90,12 +92,12 @@ export const queryOnChainProposals = async ({ network, status }): Promise<OnChai
       }
       return proposalsParsed
     } else {
-      console.log(`No ${network.chain_id} proposals found`)
+      console.log(`\n\tNo ${network.chain_id} proposals found`)
       return []
     }
 
   } catch (e) {
-    console.log(`PROP ${network.name}  ${e}`)
+    console.log(`queryOnChainProposals caught error for ${network.name}`, e)
     return []
   }
 };

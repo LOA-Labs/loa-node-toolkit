@@ -24,6 +24,7 @@ export const Interval = {
     if (run_on_start === true && counts[uuid].ran_on_start === undefined) {
       return counts[uuid].ran_on_start = true
     }
+    console.log(`\ncounts[${uuid}].count ${counts[uuid].count} >= counts[${uuid}].period ${counts[uuid].period}: ${counts[uuid].count >= counts[uuid].period}`)
     return counts[uuid].count >= counts[uuid].period
   }
 }

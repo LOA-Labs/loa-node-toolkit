@@ -64,7 +64,10 @@ export const notify = async ({ text, config, service, response_url = null }: Not
           })
         );
         console.log(
-          `\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n>>> START ${serviceKey} NOTIFICATION\n${text}\n\n<<< END ${serviceKey} NOTIFICATION\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n`
+          `>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>`,
+          `START ${serviceKey} NOTIFICATION\n${text}\n`,
+          `\nEND ${serviceKey} NOTIFICATION\n`,
+          `<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n`
         );
       } catch (e) {
         console.log(e.message || e);

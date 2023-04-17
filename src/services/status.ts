@@ -2,12 +2,47 @@ import axios from "axios";
 import { notify } from "../helpers/notify";
 import Report from "../helpers/class.report";
 import { Interval } from "../helpers/interval.factory";
-import { serviceFiltered, icons } from "../helpers/utils";
+import { serviceFiltered, icons, microToMacro } from "../helpers/utils";
 import { LntConfig, NetworkConfig, Service } from "../helpers/global.types";
 import { socketFactory, WebsocketClientObject } from "../helpers/socket.factory";
-import { delegationsEventHandler, getReqMsgDelegate, getReqMsgUnDelegate, statusRequest } from "../helpers/rpcQueries";
+import { JsonRpcRequest } from "@cosmjs/json-rpc";
+import { getNewBlock, getNewBlockEventHandler } from "../helpers/rpc_query/block";
 
 const localStatusTesting = true;
+
+//not currently used but
+//keeping JsonRpcRequest notes here for next time
+const statusRequest: JsonRpcRequest = {
+  jsonrpc: "2.0",
+  id: 1,
+  method: "status",
+  params: []
+}
+const consensusParams: JsonRpcRequest = {
+  jsonrpc: "2.0",
+  id: 2,
+  method: "consensus_params",
+  params: []
+}
+const accQuery: JsonRpcRequest = {
+  jsonrpc: "2.0",
+  id: 3,
+  method: "abci_query",
+  params: {
+    path: "custom/auth/account",
+    data: Buffer.from("{\"address\":\"regen1...\"}", "utf8").toString("hex")
+  }
+};
+const validatorQuery: JsonRpcRequest = {
+  jsonrpc: "2.0",
+  id: 3,
+  method: "staking/validator",
+  params: {
+    validator_addr: "<validator_address>"
+  }
+}
+//////////////////
+
 
 export default async (service: Service, config: LntConfig): Promise<boolean> => {
 
@@ -24,6 +59,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
   //set report defaults
   let notifyFlag = false;
   let messageType = "Checkin";
+  let latest_block_time_dif_seconds = -1
   let latest_block_time_maxdif_seconds = 60;
   let disk_alert_threshold = 96;
 
@@ -32,7 +68,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
   const colWidths = [5, 20, 5, 10, 10, 15]
   report.backticks().addRow(
     report.startCol(colWidths)
-      .addCol("///", "left")
+      .addCol("///   ", "left")
       .addCol("Network", "left")
       .addCol("Disk", "right")
       .addCol("Height", "right")
@@ -58,23 +94,39 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
 
     if (process.env.NODE_ENV == "production" || localStatusTesting) {
       try {
-
-        const WS: WebsocketClientObject = socketFactory(network.rpc)
         ////////////////////////////////////////////////////
-        //query rpc for status
-        let rpc_status = await WS.client.execute(statusRequest)
+        //get client object and query status
+        const WS: WebsocketClientObject = await socketFactory(network.rpc)
+        const res_status = await WS.client.execute(statusRequest)
+        // const res_consensus = await WS.client.execute(consensusParams)
+        const res_acc = await WS.client.execute(accQuery)
+        // console.log(res_acc.result.response.value)
+        // console.log(atob(res_acc.result.response.value))
 
-        ////////////////////////////////////////////////////
-        //add subscriptions
-        WS.addSubscription({ key: "_getReqMsgDelegate", config, network, service, notify, requestFunction: getReqMsgDelegate, eventHandler: delegationsEventHandler })
-        WS.addSubscription({ key: "_getReqMsgUnDelegate", config, network, service, notify, requestFunction: getReqMsgUnDelegate, eventHandler: delegationsEventHandler })
+        WS.addSubscription({ key: "_getNewBlock", config, network, service, requestFunction: getNewBlock, eventHandler: getNewBlockEventHandler })
+        // WS.addSubscription({ key: "_getVote", config, network, service, requestFunction: getVoteEvent, eventHandler: getVoteEventHandler })
+        // WS.addSubscription({ key: "_valQuery", config, network, service, requestFunction: validatorQuery, eventHandler: getVoteEventHandler })
 
-        voting_power = rpc_status.result.validator_info.voting_power;
-        latest_block_height = rpc_status.result.sync_info.latest_block_height;
-        catching_up = rpc_status.result.sync_info.catching_up;
-        latest_block_time = rpc_status.result.sync_info.latest_block_time;
+        //collect data of interest
+        voting_power = res_status.result.validator_info.voting_power;
+        latest_block_height = res_status.result.sync_info.latest_block_height;
+        catching_up = res_status.result.sync_info.catching_up;
+        latest_block_time = res_status.result.sync_info.latest_block_time;
+        //compute time since last block
         unix_time_now = new Date().getTime() / 1000;
         unix_time_block = new Date(latest_block_time).getTime() / 1000;
+        latest_block_time_dif_seconds = Math.abs(unix_time_block - unix_time_now)
+
+        //check elapsed time since last block
+        if (
+          catching_up == true ||
+          latest_block_time_dif_seconds > latest_block_time_maxdif_seconds ||
+          latest_block_height <= 0
+        ) {
+          notifyFlag = true;
+          messageType = "BLOCK ALERT!";
+          icon = icons.bad;
+        }
 
       } catch (e) {
         if (e.config?.url && e.message) e.message += `: ${e.config?.url}`; notifyFlag = true;
@@ -82,19 +134,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         icon = icons.bad;
         report.addRow(e.message)
       }
-    }
 
-    ////////////////////////////////////////////////////
-    //check elapsed time since last block
-    const latest_block_time_dif_seconds = Math.abs(unix_time_block - unix_time_now)
-    if (
-      catching_up == true ||
-      latest_block_time_dif_seconds > latest_block_time_maxdif_seconds ||
-      latest_block_height == 0
-    ) {
-      notifyFlag = true;
-      messageType = "BLOCK ALERT!";
-      icon = icons.bad;
     }
 
     ////////////////////////////////////////////////////
@@ -116,9 +156,10 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         }
         diskReport = `${diskData.data.percent}%`;
       } catch (e) {
-        console.log(e);
+        console.log("Caught disk check error", network.chain_id, e.config || e);
       }
     }
+
     ////////////////////////////////////////////////////
     //add report row with data results
     report.addRow(
@@ -128,7 +169,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         .addCol(diskReport, "right")
         .addCol(latest_block_height, "right")
         .addCol(`${latest_block_time_dif_seconds.toFixed(1)}s`, "right")
-        .addCol(voting_power, "right")
+        .addCol(`${Number(microToMacro(voting_power) / 1000).toFixed(3)}`, "right")
         .endCol()
     )
 
@@ -138,7 +179,6 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
     notifyFlag = true;
     Interval.reset(service.uuid);
   }
-
 
   report.addHeader(`\n*Monitoring ${messageType}*`)
 

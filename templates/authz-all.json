@@ -3,8 +3,8 @@
     "messages": [
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -14,8 +14,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -25,8 +25,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -36,8 +36,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -47,8 +47,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -58,8 +58,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos...",
+        "grantee": "cosmos...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.bank.v1beta1.SendAuthorization",
@@ -75,8 +75,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos...",
+        "grantee": "cosmos...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -87,8 +87,8 @@
       },
       {
         "@type": "/cosmos.authz.v1beta1.MsgGrant",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos...",
+        "grantee": "cosmos...",
         "grant": {
           "authorization": {
             "@type": "/cosmos.authz.v1beta1.GenericAuthorization",
@@ -99,12 +99,28 @@
       },
       {
         "@type": "/cosmos.feegrant.v1beta1.MsgGrantAllowance",
-        "granter": "cosmos1a...",
-        "grantee": "cosmos1b...",
+        "granter": "cosmos1...",
+        "grantee": "cosmos1...",
         "allowance": {
-          "@type": "/cosmos.feegrant.v1beta1.BasicAllowance",
-          "spend_limit": [],
-          "expiration": null
+          "@type": "/cosmos.feegrant.v1beta1.PeriodicAllowance",
+          "basic": {
+            "spend_limit": [],
+            "expiration": ""
+          },
+          "period": "86400s",
+          "period_spend_limit": [
+            {
+              "denom": "uatom",
+              "amount": "1000000"
+            }
+          ],
+          "period_can_spend": [
+            {
+              "denom": "uatom",
+              "amount": "1000000"
+            }
+          ],
+          "period_reset": ""
         }
       }
     ],

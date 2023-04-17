@@ -5,8 +5,8 @@ export default class Report {
   private colIndex: number = 0;
   constructor() { }
 
-  private div: string = `==============================`
-  private break: string = ` ----------------------------`
+  private div: string = `\n\n============================`
+  private break: string = `\n----------------------------`
 
   public header(data: string): Report {
     this.rows.push('')
@@ -22,6 +22,10 @@ export default class Report {
   }
   public addRow(data: string): Report {
     this.rows.push(data)
+    return this
+  }
+  public appendRow(data: string): Report {
+    this.rows[this.rows.length - 1] += data
     return this
   }
   public addCol(data: any, align: string = "left", pad?: number): Report {
@@ -51,7 +55,9 @@ export default class Report {
     return this
   }
   public print(): string {
-    return this.rows.join(`\n`)
+    let res = this.rows.join(`\n`)
+    this.rows.length = 0
+    return res
   }
   public log(): void {
     console.log(this.print())

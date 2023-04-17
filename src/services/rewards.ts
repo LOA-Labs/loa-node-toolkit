@@ -8,23 +8,26 @@ import { notify } from "../helpers/notify";
 import {
   $fmt,
   extractBech32Prefix,
-  getSigningClient,
   microToMacro,
   serviceFiltered,
   getCoinGeckoPrice,
-  granterStdFee,
+  SignerObject,
+  getSignerObject,
+  execSignAndBroadcast,
 } from "../helpers/utils";
 import Report from "../helpers/class.report";
 import { LntConfig, NetworkConfig, Service } from "../helpers/global.types";
 
+
 const testAsProduction = true;
+const debug = new Report();
 
-export default async (service: Service, config: LntConfig): Promise<boolean> => {
-
+export default async (service: Service, config: LntConfig): Promise<void> => {
+  debug.header("REWARDS")
   try {
 
     const nowTime = new Date().toISOString();
-    console.log(`\t${config.title} ${service.title} \n\tTime: ${nowTime}`);
+    debug.addRow(`\t${config.title} ${service.title} \n\tTime: ${nowTime}`);
 
     const report = new Report();
     report.addRow(`${config.title} ${service.title}`).backticks();
@@ -55,6 +58,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
         try {
           ////////////////////////////////////////////////////
           //get price
+          // price = 0.18
           price = await getCoinGeckoPrice({
             id: network.coingecko_id,
             currency: "usd",
@@ -65,18 +69,20 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
           ////////////////////////////////////////////////////
           //withdraw rewards and commissions
           let resRewards: any = await txRewards({ config, network, service });
-          console.log(JSON.stringify(resRewards.res.events))
+          debug.addRow(`DEBUG REWARDS === ${network.chain_id}`)
+            .addRow(JSON.stringify(resRewards.res))
 
           ////////////////////////////////////////////////////
           //resRewards.res.rawLog is array with object types "type": "withdraw_rewards",  "type": "withdraw_commission" but need to be iterated to find, easier to compare postBalance to get the earnings
           const postBalance: queryBalanceResult = await queryBalance(network);
           let earnings = Math.abs(postBalance.amount - preBalance.amount);
-          console.log("Earnings:", earnings);
+          debug.addRow(`Earnings: ${earnings}`);
 
           ////////////////////////////////////////////////////
           //if restake amount set in network config, execute restaking tx
           let amountToRestake = Math.floor(earnings * Number(network.restake || 0));
-          if (Math.abs(amountToRestake) > 0) {
+          if (Math.abs(amountToRestake / 100000) > 0) {
+            debug.addRow("Restaking")
             let resRestake: any = await txRestake({
               amountToRestake,
               config,
@@ -88,13 +94,13 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
 
           ////////////////////////////////////////////////////
           //prepare human readable amounts
-          macroEarnings = microToMacro(earnings);
-          macroBalance = microToMacro(postBalance.amount);
-          macroRestaked = microToMacro(amountToRestake);
-          macroStaked = microToMacro(stakedBalance.amount);
+          macroEarnings = microToMacro(earnings, network);
+          macroBalance = microToMacro(postBalance.amount, network);
+          macroRestaked = microToMacro(amountToRestake, network);
+          macroStaked = microToMacro(stakedBalance.amount, network);
 
         } catch (e) {
-          console.log("ERROR", e);
+          debug.addRow(`Caught ERROR: `).addRow(e);
         }
       }
 
@@ -115,10 +121,10 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
       ////////////////////////////////////////////////////
       //prep report display
       let denomPad = 21;
-      let macroEarningsDisplay = (macroEarnings + macroDenom).padStart(denomPad);
-      let macroBalanceDisplay = (macroBalance + macroDenom).padStart(denomPad);
-      let macroRestakedDisplay = (macroRestaked + macroDenom).padStart(denomPad);
-      let macroStakedDisplay = (macroStaked + macroDenom).padStart(denomPad);
+      let macroEarningsDisplay = (macroEarnings.toFixed(3) + macroDenom).padStart(denomPad);
+      let macroBalanceDisplay = (macroBalance.toFixed(3) + macroDenom).padStart(denomPad);
+      let macroRestakedDisplay = (macroRestaked.toFixed(3) + macroDenom).padStart(denomPad);
+      let macroStakedDisplay = (macroStaked.toFixed(3) + macroDenom).padStart(denomPad);
 
       ////////////////////////////////////////////////////
       //add row to report
@@ -164,24 +170,22 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
       .backticks();
 
     await notify({ text: report.print(), config, service });
-    return true
 
   } catch (e) {
     await notify({ text: `Caught Error ${e.message}`, config, service });
-    return false
   }
+
+  debug.log()
+
 }
 
 
 ////////////////////////////////////////////////////
 //validator distributions transaction, abstract into separate function
 const txRewards = async ({ config, network, service }): Promise<any> => {
-  const { signingClient, senderAddress } = await getSigningClient({
-    mnemonic: config.grantee_mnemonics[service.use_mnemonic],
-    rpc: network.rpc,
-    gasPrices: `${network.gas_prices}${network.denom}`,
-    prefix: extractBech32Prefix(network.granter),
-  });
+  ////////////////////////////////////////////////////
+  //get signer address
+  const signerObject: SignerObject = await getSignerObject({ config, network, service })
 
   const txMsgWithdrawDelegatorReward = {
     typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
@@ -205,20 +209,15 @@ const txRewards = async ({ config, network, service }): Promise<any> => {
   const MsgExec = {
     typeUrl: "/cosmos.authz.v1beta1.MsgExec",
     value: {
-      grantee: senderAddress,
+      grantee: signerObject.senderAddress,
       msgs: [txMsgWithdrawDelegatorReward, txMsgWithdrawValidatorCommission],
     },
   };
 
   try {
-    let res = await signingClient.signAndBroadcast(
-      senderAddress,
-      [MsgExec],
-      granterStdFee(network)
-    );
+    let res = await execSignAndBroadcast({ signerObject, msg: [MsgExec], network });
     return { chain_id: network.chain_id, res };
   } catch (e) {
-    console.log(e);
     return { chain_id: network.chain_id, error: e };
   }
 };
@@ -226,14 +225,11 @@ const txRewards = async ({ config, network, service }): Promise<any> => {
 ////////////////////////////////////////////////////
 //validator restaking transaction, abstract into separate function
 const txRestake = async ({ amountToRestake, config, network, service }): Promise<any> => {
-  console.log("restaking", amountToRestake, network.denom);
+  debug.section().addRow(`Restaking ${amountToRestake}${network.denom}`);
 
-  const { signingClient, senderAddress } = await getSigningClient({
-    mnemonic: config.grantee_mnemonics[service.use_mnemonic],
-    rpc: network.rpc,
-    gasPrices: `${network.gas_prices}${network.denom}`,
-    prefix: extractBech32Prefix(network.granter),
-  });
+  ////////////////////////////////////////////////////
+  //get signer address
+  const signerObject: SignerObject = await getSignerObject({ config, network, service })
 
   const txMsgDelegate = {
     typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
@@ -252,20 +248,15 @@ const txRestake = async ({ amountToRestake, config, network, service }): Promise
   const MsgExec = {
     typeUrl: "/cosmos.authz.v1beta1.MsgExec",
     value: {
-      grantee: senderAddress,
+      grantee: signerObject.senderAddress,
       msgs: [txMsgDelegate],
     },
   };
 
   try {
-    let res = await signingClient.signAndBroadcast(
-      senderAddress,
-      [MsgExec],
-      granterStdFee(network)
-    );
+    let res = await execSignAndBroadcast({ signerObject, msg: [MsgExec], network });
     return { chain_id: network.chain_id, res };
   } catch (e) {
-    console.log(e);
     return { chain_id: network.chain_id, error: e };
   }
 };

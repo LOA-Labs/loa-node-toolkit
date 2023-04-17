@@ -6,13 +6,14 @@ import { queryBalance, queryBalanceResult } from "../helpers/balances";
 import { MsgSend } from "cosmjs-types/cosmos/bank/v1beta1/tx";
 import { notify } from "../helpers/notify";
 import {
-  getSigningClient,
-  signAndBroadcast,
   $fmt,
   microToMacro,
   serviceFiltered,
   extractBech32Prefix,
   getCoinGeckoPrice,
+  SignerObject,
+  getSignerObject,
+  execSignAndBroadcast,
 } from "../helpers/utils";
 import Report from "../helpers/class.report";
 import { LntConfig, NetworkConfig, Service } from "../helpers/global.types";
@@ -40,7 +41,10 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
       if (serviceFiltered("status", network) || network?.enabled === false) continue;
 
       if (process.env.NODE_ENV == "production" || testProduction) {
+
         console.log(`\nTrying distribution for ${network.denom}...\n`);
+        let pre_balance: queryBalanceResult = await queryBalance(network);
+        report.section(`Pre Balance: ${pre_balance.amount}${network.denom}`);
         try {
           curPrice = await getCoinGeckoPrice({
             id: network.coingecko_id,
@@ -49,7 +53,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
           console.log(`Current price is ${curPrice}`);
 
           ////////////////////////////////////////////////////
-          //execute distrubtion 
+          //execute distrubtions
           resDistribution = await txDistribution({ config, network, service });
           console.log("resDistribution", resDistribution);
 
@@ -60,7 +64,7 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
 
       ////////////////////////////////////////////////////
       //prepare report
-      report.addRow(`\n---\n${network.chain_id}\nPrice:\t${$fmt(curPrice, 20)}`);
+      report.addRow(`${network.chain_id}\nPrice:\t${$fmt(curPrice, 20)}`);
       for (let index = 0; index < resDistribution.sendReport.length; index++) {
         let sendReport: any = resDistribution.sendReport[index];
         let $value = microToMacro(sendReport.amount) * curPrice;
@@ -75,6 +79,11 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
           )}`
         );
       }
+
+      let new_balance: queryBalanceResult = await queryBalance(network);
+      report.addRow(`\nNew Balance: ${new_balance.amount}${network.denom}`).section();
+
+
     }
 
     await notify({ text: report.backticks().print(), config, service });
@@ -92,12 +101,9 @@ export default async (service: Service, config: LntConfig): Promise<boolean> => 
 const txDistribution = async ({ config, network, service }): Promise<any> => {
   let balance: queryBalanceResult = await queryBalance(network);
 
-  const { signingClient, senderAddress } = await getSigningClient({
-    mnemonic: config.grantee_mnemonics[service.use_mnemonic],
-    rpc: network.rpc,
-    gasPrices: `${network.gas_prices}${network.denom}`,
-    prefix: extractBech32Prefix(network.granter),
-  });
+  ////////////////////////////////////////////////////
+  //get signer address
+  const signerObject: SignerObject = await getSignerObject({ config, network, service })
 
   const distributionMsgsAr = [];
   const sendReport = [];
@@ -131,19 +137,12 @@ const txDistribution = async ({ config, network, service }): Promise<any> => {
   const MsgExec = {
     typeUrl: "/cosmos.authz.v1beta1.MsgExec",
     value: {
-      grantee: senderAddress,
+      grantee: signerObject.senderAddress,
       msgs: distributionMsgsAr,
     },
   };
 
-  let finalMessage = {
-    network,
-    signingClient,
-    senderAddress,
-    msg: [MsgExec],
-  };
-
-  let res: any = await signAndBroadcast(finalMessage);
+  let res: any = await execSignAndBroadcast({ signerObject, msg: [MsgExec], network });
   res.sendReport = sendReport;
   return res;
 };
